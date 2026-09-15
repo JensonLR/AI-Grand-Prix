@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/shared" },
+    { "path": "packages/sim-core" },
+    { "path": "packages/driver-sdk" },
+    { "path": "apps/web" },
+    { "path": "apps/race-runner" }
+  ]
+}

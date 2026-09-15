@@ -1,0 +1,8 @@
+node_modules
+dist
+.env
+*.log
+coverage
+apps/web/test-results
+data/races/*.agpr
+!data/races/demo.agpr.json

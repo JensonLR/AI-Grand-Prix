@@ -1,0 +1,2 @@
+import { describe,expect,it } from 'vitest';import { DecisionSchema,decisionToControl } from './index';
+describe('driver protocol',()=>{it('rejects malformed plans',()=>expect(()=>DecisionSchema.parse({controls:[]})).toThrow());it('clamps control values',()=>{const d=DecisionSchema.parse({horizonSeconds:1,controls:[{t:0,steering:9,throttle:2,brake:-3}],energyDeploy:4});expect(decisionToControl(d)).toEqual({steering:1,throttle:1,brake:0,energyDeploy:1});});});

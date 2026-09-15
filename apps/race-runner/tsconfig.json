@@ -1,0 +1,1 @@
+{"compilerOptions":{"composite":true,"target":"ES2022","module":"ESNext","moduleResolution":"Bundler","strict":true,"declaration":true,"outDir":"dist","types":["node"]},"include":["src"],"references":[{"path":"../../packages/shared"},{"path":"../../packages/sim-core"},{"path":"../../packages/driver-sdk"}]}
