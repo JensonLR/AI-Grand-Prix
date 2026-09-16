@@ -1,7 +1,8 @@
 import { mkdir,writeFile } from 'node:fs/promises';
 import { dirname,resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { RaceSimulation,createCar,FIXED_DT } from '@agp/sim-core';
+import { createCar,FIXED_DT } from '@agp/sim-core';
+import { ChampionshipRaceSimulation } from '@agp/sim-core/championship';
 import { DeterministicDriver,decisionToControl,observe } from '@agp/driver-sdk';
 import { VERSION,type ConstructorTuning,type Control,type ReplayFile } from '@agp/shared';
 
@@ -25,7 +26,7 @@ const roster=[
 ] as const;
 
 const states=roster.map((e,i)=>{const team=teams[e[3]],c=createCar(e[0],e[1],e[2],team.colour,i,team.t);c.teamId=e[3];c.teamName=team.name;return c;});
-const sim=new RaceSimulation(states,3,4127,'CLEAR');
+const sim=new ChampionshipRaceSimulation(states,3,4127,'CLEAR');
 const drivers=new Map<string,DeterministicDriver>(roster.map(e=>[e[0],new DeterministicDriver(e[0],e[1])]));
 const controls=new Map<string,Control>(),frames:ReplayFile['frames']=[],events:unknown[]=[];
 const capture=()=>({t:+sim.state.time.toFixed(3),cars:sim.state.cars.map(c=>({id:c.id,x:+c.x.toFixed(3),z:+c.z.toFixed(3),yaw:+c.yaw.toFixed(5),speed:+c.speed.toFixed(2),lap:c.lap,position:c.position,status:c.status,damage:+c.damage.toFixed(3),compound:c.compound,neural:c.neural?{activeNeurons:c.neural.activeNeurons,spikeRate:c.neural.spikeRate,visualActivity:c.neural.visualActivity,descendingActivity:c.neural.descendingActivity,steeringOutput:c.neural.steeringOutput,throttleOutput:c.neural.throttleOutput,brakeOutput:c.neural.brakeOutput}:undefined}))});
@@ -36,11 +37,11 @@ while(sim.state.flag!=='CHEQUERED'&&sim.state.time<480){
   if(sim.state.tick%48===0)frames.push(capture());
 }
 if(frames.at(-1)?.t!==+sim.state.time.toFixed(3))frames.push(capture());
-for(const c of [...sim.state.cars].sort((a,b)=>a.position-b.position))events.push({type:'CLASSIFICATION',car:c.id,position:c.position,status:c.status,bestLap:c.bestLap,team:c.teamId});
+for(const c of [...sim.state.cars].sort((a,b)=>a.position-b.position))events.push({type:'CLASSIFICATION',car:c.id,position:c.position,status:c.status,bestLap:c.bestLap,team:c.teamId,pitStops:c.pitStops});
 for(const incident of sim.state.incidents)events.push(incident);
 const replay:ReplayFile={format:'AGPR/1',createdAt:new Date().toISOString(),classification:'NON-BENCHMARK',reason:'AGP compact neural simulation interface. Full BANC v888 runtime is not active.',versions:VERSION,seed:sim.state.seed,laps:sim.laps,frames,events};
 for(const output of [resolve(root,'data/races/latest.agpr.json'),resolve(root,'apps/web/public/replays/demo.agpr.json')]){await mkdir(dirname(output),{recursive:true});await writeFile(output,JSON.stringify(replay));console.log(`Replay: ${output}`);}
 const finishers=sim.state.cars.filter(c=>c.status==='FINISHED').length;
 console.log(`Race complete: ${sim.state.time.toFixed(2)}s · ${frames.length} frames · ${finishers}/22 finishers`);
-console.log('Final driver state:',JSON.stringify([...sim.state.cars].sort((a,b)=>a.position-b.position).map(c=>({id:c.id,position:c.position,lap:c.lap,progress:+c.progress.toFixed(3),speed:+c.speed.toFixed(1),damage:+c.damage.toFixed(3),surface:c.surface,steer:+c.controls.steering.toFixed(2),throttle:+c.controls.throttle.toFixed(2),brake:+c.controls.brake.toFixed(2)}))));
+console.log('Final driver state:',JSON.stringify([...sim.state.cars].sort((a,b)=>a.position-b.position).map(c=>({id:c.id,position:c.position,lap:c.lap,progress:+c.progress.toFixed(3),speed:+c.speed.toFixed(1),damage:+c.damage.toFixed(3),surface:c.surface,pitStops:c.pitStops,compound:c.compound,steer:+c.controls.steering.toFixed(2),throttle:+c.controls.throttle.toFixed(2),brake:+c.controls.brake.toFixed(2)}))));
 if(finishers!==22){console.error(`AGP Super Licence smoke race failed: ${22-finishers} driver(s) did not complete the event.`);process.exitCode=1;}
