@@ -1,6 +1,8 @@
 import { readFileSync,writeFileSync } from 'node:fs';
+import { exit } from 'node:process';
 const path='packages/sim-core/src/index.ts';
 let source=readFileSync(path,'utf8');
+if(source.includes('export const TRACKS_2027=SEASON_2027_TRACKS'))exit(0);
 
 if(!source.includes("./generated/season2027")){
   source=source.replace("} from '@agp/shared';","} from '@agp/shared';\nimport { SEASON_2027_TRACKS,DEFAULT_2027_TRACK_ID,type SeasonTrack } from './generated/season2027';\nexport { DEFAULT_2027_TRACK_ID } from './generated/season2027';");
