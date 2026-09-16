@@ -1,7 +1,7 @@
 export const VERSION = {
-  sim: '0.2.0',
+  sim: '0.3.0',
   car: 'AGP-01/0.2',
-  track: 'AZURE-COAST/0.2',
+  track: 'AGP-2027-MULTITRACK/1',
   protocol: 'AGP-CONNECTOME/1',
   prompt: 'AGP-CWC/1'
 } as const;
@@ -27,6 +27,8 @@ export interface RaceConfig {
   entrants: number;
   weather: Weather;
   seed: number;
+  trackId?: string;
+  championshipRound?: number;
   humanCarId?: string;
   gridOrder?: string[];
 }
@@ -132,6 +134,8 @@ export interface RaceState {
   weather: Weather;
   wetness: number;
   incidents: RaceIncident[];
+  trackId?: string;
+  championshipRound?: number;
 }
 
 export interface ReplayCarFrame {
@@ -161,6 +165,8 @@ export interface ReplayFile {
   versions: typeof VERSION;
   seed: number;
   laps: number;
+  trackId?: string;
+  championshipRound?: number;
   frames: ReplayFrame[];
   events: unknown[];
 }
