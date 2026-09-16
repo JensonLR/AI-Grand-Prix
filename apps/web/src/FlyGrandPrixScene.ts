@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { RaceSimulation,createCar } from '@agp/sim-core';
+import { ChampionshipRaceSimulation } from '@agp/sim-core/championship';
 import { DeterministicDriver } from '@agp/driver-sdk';
 import type { Control,RaceConfig,RaceState,ReplayFile,Weather } from '@agp/shared';
 import { GrandPrixScene,type CameraMode,type Entrant as LegacyEntrant } from './GrandPrixScene';
@@ -70,7 +71,9 @@ export class FlyGrandPrixScene extends GrandPrixScene {
     s.sceneMode=config.session==='HUMAN_TEST'?'human':'live';
     s.replay=null;s.replayTime=0;s.weather=config.weather;s.applyWeather();
     const requested=Math.max(1,Math.min(config.entrants,CWC_DRIVERS.length));
-    const selected=[...ENTRANTS.slice(0,requested)];
+    const validOrder=(config.gridOrder??[]).filter(id=>ENTRANTS.some(e=>e.id===id));
+    const pool=validOrder.length?validOrder.map(id=>ENTRANTS.find(e=>e.id===id)!):ENTRANTS;
+    const selected=[...pool.slice(0,requested)];
     if(s.sceneMode==='human')selected[0]=humanEntrant;
     const neutral=config.session==='NEUTRAL_TEST';
     const states=selected.map((e,i)=>{
@@ -81,7 +84,7 @@ export class FlyGrandPrixScene extends GrandPrixScene {
       }
       return car;
     });
-    s.sim=new RaceSimulation(states,config.laps,config.seed,config.weather);
+    s.sim=new ChampionshipRaceSimulation(states,config.laps,config.seed,config.weather);
     for(const e of selected){
       s.entrants.set(e.id,e);
       if(e.id!=='human'){
