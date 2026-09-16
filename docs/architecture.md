@@ -1,9 +1,58 @@
 # Architecture
 
-The race-runner owns authoritative state. At each planning boundary it creates observations, pauses simulation time in benchmark mode, obtains all driver plans, validates them and then advances every entrant under the same fixed timestep. Rendering consumes snapshots and cannot alter classification.
+AI Grand Prix separates neural control, authoritative race state and rendering.
 
-The web application runs the same simulation in-process for zero-install live races and human test drives. It can also switch into replay mode, interpolate recorded frames, seek without simulation and select any tracked car or camera. The production boundary remains expressed as packages so the runner can emit live snapshots or `.agpr` replay data to a static spectator.
+```text
+RACING ENVIRONMENT
+    |
+    v
+AGP SENSORY ENCODER
+    |
+    v
+CONNECTOME / NEURAL ENGINE
+    |
+    v
+CONSTRAINED MOTOR READOUT
+    |
+    v
+STEERING / THROTTLE / BRAKE
+    |
+    v
+120 Hz AUTHORITATIVE RACE SIM
+    |
+    +--> replay / championship data
+    |
+    `--> browser snapshots --> React + Three.js broadcast
+```
 
-React owns menus and low-frequency broadcast state. Three.js transforms are updated imperatively. Physics is independent of Three.js and uses no render delta.
+## Authoritative simulation
 
-Version identifiers live in `@agp/shared`. Authoritative randomness must use `SeededRandom`; uncontrolled `Math.random()` is forbidden in race logic.
+`packages/sim-core` owns vehicle and race state. It advances using a fixed 120 Hz timestep and does not depend on render delta. Constructor configuration is clamped inside one technical regulation family. Three.js cannot alter race classification.
+
+## Neural control
+
+`packages/driver-sdk` owns the current compact neural runtime. World state is converted into racing sensory channels before it reaches neural state. The constrained motor readout receives neural activity rather than circuit coordinates or a hidden ideal driving answer.
+
+The current browser runtime is explicitly `AGP_SIMULATION_INTERFACE`. Full BANC v888 execution is a future local compute layer and must not be silently substituted by a scripted racing bot.
+
+## Browser
+
+`apps/web` provides the championship UI and the Three.js spectator scene. React owns menus and low-frequency broadcast state. Three.js transforms are updated imperatively from authoritative snapshots.
+
+A live browser session can run the compact neural system in-process. The long-term full-connectome architecture should move neural compute off the renderer thread through Web Workers, WASM or a local native process.
+
+## Headless race runner
+
+`apps/race-runner` runs the same race/driver packages without rendering and records `.agpr.json` frames. Public spectators should consume precomputed replays rather than rerunning 22 full connectomes.
+
+## Determinism
+
+- championship driver identity has a permanent phenotype seed
+- race seeds are explicit
+- authoritative race logic must not depend on frame rate
+- replay viewing does not require neural resimulation
+- uncontrolled randomness is kept out of race outcomes
+
+## Scientific boundary
+
+Real connectome source data, AGP simulation assumptions, trained/adaptive interface components and gameplay systems are documented separately. See `docs/connectome-integration.md`.
