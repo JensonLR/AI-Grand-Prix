@@ -1,0 +1,27 @@
+import type { ConstructorTuning } from '@agp/shared';
+
+export interface Team {id:string;name:string;short:string;colour:string;secondary:string;accent:string;philosophy:string;weakness:string;interface:string;tuning:ConstructorTuning}
+export interface Entrant {id:string;name:string;short:string;number:number;teamId:string;teamName:string;colour:string;secondary:string;accent:string;phenotypeId:string}
+const tune=(v:Partial<ConstructorTuning>):ConstructorTuning=>({aeroEfficiency:1,downforce:1,mechanicalGrip:1,energySystem:1,braking:1,tyreManagement:1,reliability:1,controlResponse:1,...v});
+
+export const TEAMS:Team[]=[
+ ['mlarvae','McLARVAE RACING','MLR','#FF7A18','#071018','#F4E8CE','Balanced aero efficiency and tyre consistency.','Less extreme peak performance.','Clean optic-flow filtering with even control bandwidth.',tune({aeroEfficiency:1.010,tyreManagement:1.010,controlResponse:.997})],
+ ['mercedeyes','MERCED-EYES','MCE','#20B8A8','#071018','#D7A647','Stable rear platform and strong energy recovery.','Slightly less agile in slow corners.','High decoder precision with conservative temporal smoothing.',tune({energySystem:1.012,reliability:1.006,controlResponse:.992})],
+ ['redbug','RED BUG RACING','RBR','#D62828','#062A8F','#F4E8CE','Sharp front end and rapid control response.','Greater instability risk.','Low-latency interface with less smoothing.',tune({downforce:1.007,controlResponse:1.014,reliability:.992})],
+ ['flyrrari','SCUDERIA FLYRRARI','SFR','#B5162C','#F2D27A','#071018','Excellent braking, traction and peak downforce.','Higher tyre stress and a narrow setup window.','Braking-biased descending readout.',tune({braking:1.014,downforce:1.010,tyreManagement:.988})],
+ ['wingliams','WINGLIAMS RACING','WGR','#1254D8','#F4E8CE','#4FD5FF','Low drag and efficient straight-line performance.','Less low-speed downforce.','Efficient vision compression with modest corner bandwidth.',tune({aeroEfficiency:1.014,energySystem:1.006,downforce:.989})],
+ ['racingbugs','RACING BUGS','RGB','#7C3AED','#F4E8CE','#12C9A0','Compact, agile and responsive.','Slightly less stable on long runs.','Fast adaptation and high steering bandwidth.',tune({mechanicalGrip:1.008,controlResponse:1.012,reliability:.994})],
+ ['astonmidge','ASTON MIDGE','AMG','#0A6B58','#E8DFC3','#D7A647','High downforce and strong medium-speed grip.','Greater drag.','Stable control with deep temporal integration.',tune({downforce:1.014,mechanicalGrip:1.005,aeroEfficiency:.989})],
+ ['haasfly','HAASFLY','HFL','#C9C3B6','#071018','#D62828','Durable mechanical platform and kerb compliance.','Lower ultimate aerodynamic efficiency.','Noise-resistant, heavily regularised readout.',tune({reliability:1.014,mechanicalGrip:1.006,aeroEfficiency:.989})],
+ ['audeye','AUD-EYE SPORT','AES','#E4572E','#071018','#9FD6FF','Excellent sensory encoding and predictable balance.','Conservative peak response.','Highest visual-interface precision on the grid.',tune({aeroEfficiency:1.004,energySystem:1.008,controlResponse:.994})],
+ ['flypine','FLYPINE','FLP','#2C75D8','#FF4F7B','#F4E8CE','Mechanical grip and wet-surface compliance.','Lower aero efficiency.','Wet-biased edge and looming encoding.',tune({mechanicalGrip:1.014,tyreManagement:1.004,aeroEfficiency:.987})],
+ ['caddislac','CADDIS-LAC RACING','CLR','#111827','#E7D3A7','#2AB7CA','Strong energy deployment and robust braking.','Slower directional change.','Powerful descending output with slower integration.',tune({energySystem:1.014,braking:1.008,controlResponse:.987})]
+].map(x=>({id:x[0] as string,name:x[1] as string,short:x[2] as string,colour:x[3] as string,secondary:x[4] as string,accent:x[5] as string,philosophy:x[6] as string,weakness:x[7] as string,interface:x[8] as string,tuning:x[9] as ConstructorTuning}));
+
+const roster:[string,string,number,string][]=[
+ ['lando-norwings','Lando Norwings',4,'mlarvae'],['oscar-flyastri','Oscar Flyastri',81,'mlarvae'],['george-buzzell','George Buzzell',63,'mercedeyes'],['kimi-antennelli','Kimi Antennelli',12,'mercedeyes'],['max-verflappen','Max Verflappen',1,'redbug'],['isack-hatchjar','Isack Hatchjar',6,'redbug'],['charles-leflec','Charles LeFlec',16,'flyrrari'],['lewis-hamilwing','Lewis Hamilwing',44,'flyrrari'],['alex-albuzz','Alex Albuzz',23,'wingliams'],['carlos-swarmz','Carlos Swarmz',55,'wingliams'],['liam-larvson','Liam Larvson',30,'racingbugs'],['arvid-wingblad','Arvid Wingblad',41,'racingbugs'],['fernando-flylonso','Fernando Flylonso',14,'astonmidge'],['lance-strollwing','Lance Strollwing',18,'astonmidge'],['esteban-ocellon','Esteban Ocellon',31,'haasfly'],['ollie-buzman','Ollie Buzman',87,'haasfly'],['nico-hoverberg','Nico Hoverberg',27,'audeye'],['gabriel-bortofly','Gabriel Bortofly',5,'audeye'],['pierre-gnatsly','Pierre Gnatsly',10,'flypine'],['franco-larvapinto','Franco Larvapinto',43,'flypine'],['valtteri-botfly','Valtteri Botfly',77,'caddislac'],['sergio-flyrez','Sergio Flyrez',11,'caddislac']
+];
+
+export const hashSeed=(text:string)=>{let h=2166136261>>>0;for(const c of text){h^=c.charCodeAt(0);h=Math.imul(h,16777619)>>>0;}return h||1};
+export const ENTRANTS:Entrant[]=roster.map(([id,name,number,teamId])=>{const t=TEAMS.find(x=>x.id===teamId)!;const seed=hashSeed(id);return{id,name,short:name.split(' ').at(-1)!.slice(0,9).toUpperCase(),number,teamId,teamName:t.name,colour:t.colour,secondary:t.secondary,accent:t.accent,phenotypeId:`FLY-${seed.toString(16).toUpperCase().padStart(8,'0')}`}});
+export const teamFor=(driver:Entrant)=>TEAMS.find(t=>t.id===driver.teamId)!;
