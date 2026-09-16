@@ -10,8 +10,16 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: npm }
       - run: npm ci
-      - name: Apply validated connectome UI patches
-        run: node scripts/patch-connectome-ui.mjs
+      - name: Sync versioned 2027 circuit geometry
+        run: node scripts/sync-2027-circuits.mjs
+      - name: Apply multitrack core
+        run: node scripts/patch-multitrack-core.mjs
+      - name: Apply multitrack neural observations
+        run: node scripts/patch-multitrack-driver.mjs
+      - name: Apply selected-circuit renderer
+        run: node scripts/patch-multitrack-scene.mjs
+      - name: Apply championship season UI
+        run: node scripts/patch-connectome-ui.mjs && node scripts/patch-season-ui.mjs
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
@@ -32,15 +40,15 @@ jobs:
           path: apps/web/dist
           if-no-files-found: error
           retention-days: 30
-      - name: Persist validated source patches
+      - name: Persist validated generated and patched sources
         if: github.event_name == 'push' && github.ref == 'refs/heads/connectome-world-championship'
         continue-on-error: true
         run: |
           git config user.name "AGP CI"
           git config user.email "actions@users.noreply.github.com"
-          git add apps/web/src/ChampionshipApp.tsx
+          git add packages/sim-core/src/index.ts packages/sim-core/src/generated/season2027.ts packages/driver-sdk/src/index.ts apps/web/src/GrandPrixScene.ts apps/web/src/ChampionshipApp.tsx apps/web/public/tracks/season2027.json
           if ! git diff --cached --quiet; then
-            git commit -m "Persist validated championship UI source fix [skip ci]"
+            git commit -m "Persist validated 2027 championship geometry and source [skip ci]"
             git push origin HEAD:connectome-world-championship || echo "A newer championship commit exists; source persistence deferred to its validation run."
           fi
       - name: Publish browser preview branch
@@ -51,4 +59,4 @@ jobs:
           publish_branch: browser-preview
           publish_dir: ./apps/web/dist
           force_orphan: true
-          commit_message: Publish tested Connectome World Championship browser build
+          commit_message: Publish tested 2027 Connectome World Championship browser build
