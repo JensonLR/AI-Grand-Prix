@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { RaceSimulation,createCar } from '@agp/sim-core';
+import { RaceSimulation,createCar,DEFAULT_2027_TRACK_ID } from '@agp/sim-core';
 import { ChampionshipRaceSimulation } from '@agp/sim-core/championship';
 import { DeterministicDriver } from '@agp/driver-sdk';
 import type { Control,RaceConfig,RaceState,ReplayFile,Weather } from '@agp/shared';
@@ -61,12 +61,13 @@ const tuningFor=(id:string,neutral:boolean)=>{
 
 /**
  * Championship adapter around the original visual scene.
- * The pre-connectome world, cameras, road, venue and car renderer remain the source of truth.
- * Only entrants + simulation control are replaced with the 22 persistent neural phenotypes.
+ * The pre-connectome world, cameras, car presentation and broadcast language remain the source of truth.
+ * Track geometry, entrants and simulation control are swapped beneath that presentation.
  */
 export class FlyGrandPrixScene extends GrandPrixScene {
   override startRace(config:RaceConfig){
-    const s=internal(this);
+    const s=internal(this),trackId=config.trackId??DEFAULT_2027_TRACK_ID;
+    this.setTrack(trackId);
     s.clearCars();
     s.sceneMode=config.session==='HUMAN_TEST'?'human':'live';
     s.replay=null;s.replayTime=0;s.weather=config.weather;s.applyWeather();
@@ -77,18 +78,17 @@ export class FlyGrandPrixScene extends GrandPrixScene {
     if(s.sceneMode==='human')selected[0]=humanEntrant;
     const neutral=config.session==='NEUTRAL_TEST';
     const states=selected.map((e,i)=>{
-      const car=createCar(e.id,e.name,e.number,e.colour,i,tuningFor(e.id,neutral));
+      const car=createCar(e.id,e.name,e.number,e.colour,i,tuningFor(e.id,neutral),trackId);
       if(e.id!=='human'){
         const d=CWC_DRIVERS.find(x=>x.id===e.id);
         if(d){car.teamId=d.teamId;car.teamName=d.teamName;}
       }
       return car;
     });
-    s.sim=new ChampionshipRaceSimulation(states,config.laps,config.seed,config.weather);
+    s.sim=new ChampionshipRaceSimulation(states,config.laps,config.seed,config.weather,trackId,config.championshipRound);
     for(const e of selected){
       s.entrants.set(e.id,e);
       if(e.id!=='human'){
-        // DeterministicDriver is now the causal LIF-inspired AGP connectome driver.
         s.drivers.set(e.id,new DeterministicDriver(e.id,e.name));
         s.controls.set(e.id,{steering:0,throttle:.82,brake:0,energyDeploy:0});
       }
@@ -98,15 +98,17 @@ export class FlyGrandPrixScene extends GrandPrixScene {
   }
 
   override async loadReplay(replay:ReplayFile){
-    const s=internal(this);s.clearCars();s.sceneMode='replay';s.replay=replay;s.replayTime=0;s.replayDuration=replay.frames.at(-1)?.t??0;s.paused=false;s.weather='CLEAR';s.applyWeather();
+    const s=internal(this),trackId=replay.trackId??DEFAULT_2027_TRACK_ID;
+    this.setTrack(trackId);
+    s.clearCars();s.sceneMode='replay';s.replay=replay;s.replayTime=0;s.replayDuration=replay.frames.at(-1)?.t??0;s.paused=false;s.weather='CLEAR';s.applyWeather();
     const first=replay.frames[0];if(!first)throw new Error('Replay has no frames');
     const entrants=first.cars.map((c,i)=>ENTRANTS.find(e=>e.id===c.id)??{...ENTRANTS[i%ENTRANTS.length],id:c.id,name:c.id.toUpperCase()});
     const states=entrants.map((e,i)=>{
-      const car=createCar(e.id,e.name,e.number,e.colour,i,tuningFor(e.id,false));
+      const car=createCar(e.id,e.name,e.number,e.colour,i,tuningFor(e.id,false),trackId);
       const d=CWC_DRIVERS.find(x=>x.id===e.id);if(d){car.teamId=d.teamId;car.teamName=d.teamName;}
       return car;
     });
-    s.sim=new RaceSimulation(states,replay.laps,replay.seed);
+    s.sim=new RaceSimulation(states,replay.laps,replay.seed,'CLEAR',trackId,replay.championshipRound);
     for(const e of entrants){s.entrants.set(e.id,e);const mesh=s.makeCar(e);s.cars.set(e.id,mesh);s.scene.add(mesh);}
     s.focusId=entrants[0].id;s.applyReplayFrame(0);
   }
