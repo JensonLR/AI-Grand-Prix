@@ -1,5 +1,7 @@
 name: CI
 on: [push, pull_request]
+permissions:
+  contents: write
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -28,3 +30,12 @@ jobs:
           path: apps/web/dist
           if-no-files-found: error
           retention-days: 30
+      - name: Publish browser preview branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/connectome-world-championship'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: browser-preview
+          publish_dir: ./apps/web/dist
+          force_orphan: true
+          commit_message: Publish tested Connectome World Championship browser build
