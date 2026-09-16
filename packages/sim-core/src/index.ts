@@ -2,10 +2,26 @@ import type { CarState, Control, RaceIncident, RaceState, Surface, Weather } fro
 
 export const PHYSICS_HZ = 120;
 export const FIXED_DT = 1 / PHYSICS_HZ;
-export const TRACK_RX = 116;
-export const TRACK_RZ = 72;
-export const TRACK_WIDTH = 13;
-const TAU = Math.PI * 2;
+export const TRACK_RX = 128;
+export const TRACK_RZ = 76;
+export const TRACK_WIDTH = 12;
+
+const CIRCUIT_POINTS=[
+  [-55,-70],[-15,-72],[35,-68],[78,-56],[112,-34],[124,-4],[116,26],[91,48],
+  [55,60],[26,52],[14,32],[26,14],[5,4],[-22,14],[-46,36],[-76,55],
+  [-108,46],[-126,20],[-120,-5],[-96,-18],[-68,-10],[-50,-28],[-76,-42],[-90,-62]
+] as const;
+
+function rawTrackPoint(t:number){
+  const n=CIRCUIT_POINTS.length,u=((t%1)+1)%1*n,i=Math.floor(u),f=u-i;
+  const p0=CIRCUIT_POINTS[(i-1+n)%n],p1=CIRCUIT_POINTS[i%n],p2=CIRCUIT_POINTS[(i+1)%n],p3=CIRCUIT_POINTS[(i+2)%n];
+  const f2=f*f,f3=f2*f,cat=(a:number,b:number,c:number,d:number)=>.5*((2*b)+(-a+c)*f+(2*a-5*b+4*c-d)*f2+(-a+3*b-3*c+d)*f3);
+  return{x:cat(p0[0],p1[0],p2[0],p3[0]),z:cat(p0[1],p1[1],p2[1],p3[1])};
+}
+
+const ARC_SAMPLES=1536,ARC_DISTANCES:number[]=[0],ARC_POINTS=Array.from({length:ARC_SAMPLES+1},(_,i)=>rawTrackPoint(i/ARC_SAMPLES));
+for(let i=1;i<ARC_POINTS.length;i++)ARC_DISTANCES[i]=ARC_DISTANCES[i-1]+Math.hypot(ARC_POINTS[i].x-ARC_POINTS[i-1].x,ARC_POINTS[i].z-ARC_POINTS[i-1].z);
+export const TRACK_LENGTH=ARC_DISTANCES.at(-1)!;
 
 export class SeededRandom {
   constructor(private state = 0x9e3779b9) {}
@@ -13,9 +29,10 @@ export class SeededRandom {
 }
 
 export function trackPoint(t:number){
-  const a=t*TAU;
-  const ripple=Math.sin(a*3)*7 + Math.sin(a*5)*2;
-  return { x:Math.cos(a)*(TRACK_RX+ripple), z:Math.sin(a)*(TRACK_RZ+ripple*.32) };
+  const target=(((t%1)+1)%1)*TRACK_LENGTH;let lo=0,hi=ARC_DISTANCES.length-1;
+  while(lo<hi){const mid=(lo+hi)>>1;if(ARC_DISTANCES[mid]<target)lo=mid+1;else hi=mid;}
+  const upper=Math.max(1,lo),lower=upper-1,span=ARC_DISTANCES[upper]-ARC_DISTANCES[lower]||1,mix=(target-ARC_DISTANCES[lower])/span;
+  return rawTrackPoint((lower+mix)/ARC_SAMPLES);
 }
 export function trackTangent(t:number){
   const e=0.0001, p=trackPoint(t), q=trackPoint((t+e)%1); const l=Math.hypot(q.x-p.x,q.z-p.z)||1;
@@ -33,7 +50,7 @@ export function nearestTrack(x:number,z:number){
 export function surfaceAt(distance:number):Surface { return distance<TRACK_WIDTH*.5?'asphalt':distance<TRACK_WIDTH*.67?'kerb':distance<TRACK_WIDTH*1.1?'grass':'gravel'; }
 
 export function createCar(id:string,name:string,number:number,colour:string,grid:number):CarState{
-  const t=(0.985-grid*.004+1)%1,p=trackPoint(t),tan=trackTangent(t),lateral=(grid%2?1:-1)*2.2;
+  const t=(0.988-grid*.0052+1)%1,p=trackPoint(t),tan=trackTangent(t),lateral=(grid%2?1:-1)*2.05;
   return {id,name,number,colour,x:p.x+tan.z*lateral,z:p.z-tan.x*lateral,yaw:tan.yaw,speed:0,vx:0,vz:0,lap:0,progress:t,position:grid+1,lastLap:null,bestLap:null,sector:3,damage:0,frontWing:1,battery:1,surface:'asphalt',tyres:Array.from({length:4},()=>({temperature:72,wear:0,slipRatio:0,slipAngle:0,locked:false,punctured:false})),controls:{steering:0,throttle:0,brake:0,energyDeploy:0},status:'RUNNING',compound:'MEDIUM',pitStops:0,penaltySeconds:0,fuel:1};
 }
 

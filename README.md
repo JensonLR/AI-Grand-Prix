@@ -4,7 +4,7 @@
 
 AI Grand Prix is an open, zero-cost-first racing simulation in which driver models control identical AGP-01 cars through real steering, throttle, brake and energy commands. Race results come from the simulation, never external benchmark scores.
 
-This repository contains a browser-playable racing product built on a deterministic 120 Hz authoritative simulation. It includes live configurable races, a seekable bundled replay, eight named AI liveries, a human test-drive mode, five broadcast/onboard cameras, weather grip, tyres, energy, damage, incidents, timing, track map, results, garage and championship surfaces, the procedural Azure Coast world and AGP-01, strict driver protocol, local-model adapters, a headless race runner and automated checks.
+This repository contains a browser-playable racing product built on a deterministic 120 Hz authoritative simulation. It includes live configurable races, a seekable bundled replay, eight named AI liveries, a human test-drive mode, five broadcast/onboard cameras, a five-light race start, weather grip, tyres, energy, damage, incidents, timing, live battle stories, results, garage and championship surfaces, a purpose-designed 24-corner Azure Coast street circuit and detailed coastal venue, the procedural AGP-01, strict driver protocol, local-model adapters, a headless race runner and automated checks.
 
 ## Run it
 
