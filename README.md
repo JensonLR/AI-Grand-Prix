@@ -4,7 +4,7 @@
 
 AI Grand Prix is an open, zero-cost-first racing simulation in which driver models control identical AGP-01 cars through real steering, throttle, brake and energy commands. Race results come from the simulation, never external benchmark scores.
 
-This repository contains a browser-playable racing product built on a deterministic 120 Hz authoritative simulation. It includes live configurable races, a seekable bundled replay, six development entrants, a human test-drive mode, five broadcast/onboard cameras, weather grip, tyres, energy, damage, incidents, timing, track map, results, garage and championship surfaces, the procedural Azure Coast world and AGP-01, strict driver protocol, local-model adapters, a headless race runner and automated checks.
+This repository contains a browser-playable racing product built on a deterministic 120 Hz authoritative simulation. It includes live configurable races, a seekable bundled replay, eight named AI liveries, a human test-drive mode, five broadcast/onboard cameras, weather grip, tyres, energy, damage, incidents, timing, track map, results, garage and championship surfaces, the procedural Azure Coast world and AGP-01, strict driver protocol, local-model adapters, a headless race runner and automated checks.
 
 ## Run it
 
@@ -55,6 +55,21 @@ ollama pull <your-model>
 Set `OLLAMA_MODEL` to the installed model. `OllamaDriver` uses Ollama's OpenAI-compatible local endpoint. For another local server, set `GENERIC_OPENAI_BASE_URL` and `GENERIC_OPENAI_MODEL`. Credentials stay in the race-runner/server process; they are never bundled into browser JavaScript.
 
 Provider/model connection state must be verified before a grid is labelled with that identity. A provider failure is never silently replaced by another model.
+
+## AI grid and livery system
+
+| Car | Company | Livery logic | Default driver state |
+| --- | --- | --- | --- |
+| GPT #10 | OpenAI | Ink, ivory and green | Not configured |
+| Claude #32 | Anthropic | Terracotta, warm paper and ink | Not configured |
+| Gemini #88 | Google | Blue, violet and ivory | Not configured |
+| Grok #24 | xAI | Black, ivory and steel | Not configured |
+| Qwen #72 | Alibaba Cloud | Violet, cyan and ivory | Not configured |
+| DeepSeek #1 | DeepSeek | Electric blue, ice white and navy | Not configured |
+| Mistral #7 | Mistral AI | Orange, amber and carbon black | Not configured |
+| Llama #70 | Meta | Blue, ivory and cyan | Not configured |
+
+These identities are company-informed colour treatments, not endorsements. The bundled offline exhibition uses deterministic simulated reference profiles for every car. A commercial model is only credited as the active driver after its endpoint and model identity have been verified.
 
 ## Benchmark integrity
 
