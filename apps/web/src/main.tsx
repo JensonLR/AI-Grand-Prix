@@ -5,5 +5,6 @@ import './styles.css';
 import './championship.css';
 import './weekend.css';
 import './phenotype.css';
+import './season.css';
 
 createRoot(document.getElementById('root')!).render(<StrictMode><ChampionshipApp/></StrictMode>);
