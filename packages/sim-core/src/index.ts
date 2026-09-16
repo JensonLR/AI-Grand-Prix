@@ -7,6 +7,8 @@ import type {
   Surface,
   Weather
 } from '@agp/shared';
+import { SEASON_2027_TRACKS,DEFAULT_2027_TRACK_ID,type SeasonTrack } from './generated/season2027';
+export { DEFAULT_2027_TRACK_ID } from './generated/season2027';
 
 export const PHYSICS_HZ = 120;
 export const FIXED_DT = 1 / PHYSICS_HZ;
@@ -14,113 +16,58 @@ export const TRACK_RX = 128;
 export const TRACK_RZ = 76;
 export const TRACK_WIDTH = 12;
 
-const CIRCUIT_POINTS = [
+const AZURE_POINTS = [
   [-55,-70],[-15,-72],[35,-68],[78,-56],[112,-34],[124,-4],[116,26],[91,48],
   [55,60],[26,52],[14,32],[26,14],[5,4],[-22,14],[-46,36],[-76,55],
   [-108,46],[-126,20],[-120,-5],[-96,-18],[-68,-10],[-50,-28],[-76,-42],[-90,-62]
 ] as const;
 
+export const AZURE_COAST_TRACK_ID='azure-coast';
+export const TRACKS_2027=SEASON_2027_TRACKS;
+export type TrackDefinition=SeasonTrack;
 export const NEUTRAL_TUNING: ConstructorTuning = {
-  aeroEfficiency: 1,
-  downforce: 1,
-  mechanicalGrip: 1,
-  energySystem: 1,
-  braking: 1,
-  tyreManagement: 1,
-  reliability: 1,
-  controlResponse: 1
+  aeroEfficiency: 1,downforce: 1,mechanicalGrip: 1,energySystem: 1,braking: 1,tyreManagement: 1,reliability: 1,controlResponse: 1
 };
 
-function rawTrackPoint(t: number) {
-  const n = CIRCUIT_POINTS.length;
-  const u = (((t % 1) + 1) % 1) * n;
-  const i = Math.floor(u);
-  const f = u - i;
-  const p0 = CIRCUIT_POINTS[(i - 1 + n) % n];
-  const p1 = CIRCUIT_POINTS[i % n];
-  const p2 = CIRCUIT_POINTS[(i + 1) % n];
-  const p3 = CIRCUIT_POINTS[(i + 2) % n];
-  const f2 = f * f;
-  const f3 = f2 * f;
-  const cat = (a: number,b: number,c: number,d: number) =>
-    .5 * ((2*b) + (-a+c)*f + (2*a-5*b+4*c-d)*f2 + (-a+3*b-3*c+d)*f3);
-  return {x:cat(p0[0],p1[0],p2[0],p3[0]),z:cat(p0[1],p1[1],p2[1],p3[1])};
+const runtimeTracks=new Map<string,{id:string;points:readonly (readonly [number,number])[];officialLengthM:number|null;name:string}>([
+  [AZURE_COAST_TRACK_ID,{id:AZURE_COAST_TRACK_ID,points:AZURE_POINTS,officialLengthM:null,name:'Azure Coast'}],
+  ...SEASON_2027_TRACKS.map(t=>[t.id,{id:t.id,points:t.points,officialLengthM:t.officialLengthM,name:t.circuitName}] as const)
+]);
+const arcCache=new Map<string,{dist:number[];samples:{x:number;z:number}[];length:number}>();
+export function getTrackDefinition(id:string=DEFAULT_2027_TRACK_ID){return SEASON_2027_TRACKS.find(t=>t.id===id)??SEASON_2027_TRACKS[0];}
+export function getTrackIds(){return SEASON_2027_TRACKS.map(t=>t.id);}
+function runtime(id:string=DEFAULT_2027_TRACK_ID){return runtimeTracks.get(id)??runtimeTracks.get(DEFAULT_2027_TRACK_ID)!;}
+function rawTrackPointFor(id:string,t:number){
+  const pts=runtime(id).points,n=pts.length,u=(((t%1)+1)%1)*n,i=Math.floor(u),f=u-i;
+  const p0=pts[(i-1+n)%n],p1=pts[i%n],p2=pts[(i+1)%n],p3=pts[(i+2)%n],f2=f*f,f3=f2*f;
+  const cat=(a:number,b:number,c:number,d:number)=>.5*((2*b)+(-a+c)*f+(2*a-5*b+4*c-d)*f2+(-a+3*b-3*c+d)*f3);
+  return{x:cat(p0[0],p1[0],p2[0],p3[0]),z:cat(p0[1],p1[1],p2[1],p3[1])};
 }
-
-const ARC_SAMPLES = 1536;
-const ARC_DISTANCES: number[] = [0];
-const ARC_POINTS = Array.from({length:ARC_SAMPLES+1},(_,i)=>rawTrackPoint(i/ARC_SAMPLES));
-for(let i=1;i<ARC_POINTS.length;i++) {
-  ARC_DISTANCES[i] = ARC_DISTANCES[i-1] + Math.hypot(
-    ARC_POINTS[i].x - ARC_POINTS[i-1].x,
-    ARC_POINTS[i].z - ARC_POINTS[i-1].z
-  );
+function arc(id:string){
+  const key=runtimeTracks.has(id)?id:DEFAULT_2027_TRACK_ID,cached=arcCache.get(key);if(cached)return cached;
+  const count=1536,samples=Array.from({length:count+1},(_,i)=>rawTrackPointFor(key,i/count)),dist=[0];
+  for(let i=1;i<samples.length;i++)dist[i]=dist[i-1]+Math.hypot(samples[i].x-samples[i-1].x,samples[i].z-samples[i-1].z);
+  const value={dist,samples,length:dist.at(-1)!};arcCache.set(key,value);return value;
 }
-export const TRACK_LENGTH = ARC_DISTANCES.at(-1)!;
+export function trackLength(trackId:string=DEFAULT_2027_TRACK_ID){return arc(trackId).length;}
+export const TRACK_LENGTH=trackLength(DEFAULT_2027_TRACK_ID);
+export function trackPoint(t:number,trackId:string=DEFAULT_2027_TRACK_ID){
+  const a=arc(trackId),target=(((t%1)+1)%1)*a.length;let lo=0,hi=a.dist.length-1;while(lo<hi){const mid=(lo+hi)>>1;if(a.dist[mid]<target)lo=mid+1;else hi=mid;}
+  const upper=Math.max(1,lo),lower=upper-1,span=a.dist[upper]-a.dist[lower]||1,mix=(target-a.dist[lower])/span;
+  return rawTrackPointFor(trackId,(lower+mix)/1536);
+}
+export function trackTangent(t:number,trackId:string=DEFAULT_2027_TRACK_ID){const e=.0001,p=trackPoint(t,trackId),q=trackPoint((t+e)%1,trackId),l=Math.hypot(q.x-p.x,q.z-p.z)||1;return{x:(q.x-p.x)/l,z:(q.z-p.z)/l,yaw:Math.atan2(q.x-p.x,q.z-p.z)};}
+export function trackCurvature(t:number,trackId:string=DEFAULT_2027_TRACK_ID){const a=trackTangent((t-.006+1)%1,trackId).yaw,b=trackTangent((t+.006)%1,trackId).yaw;return Math.abs(wrapAngle(b-a))/.012;}
+export function nearestTrack(x:number,z:number,hintT?:number,trackId:string=DEFAULT_2027_TRACK_ID){
+  let best=Infinity,bestT=hintT??0;const consider=(t:number)=>{const wrapped=(t+1)%1,p=trackPoint(wrapped,trackId),d=(p.x-x)**2+(p.z-z)**2;if(d<best){best=d;bestT=wrapped;}};
+  if(hintT===undefined){for(let i=0;i<512;i++)consider(i/512);}else{for(let k=-12;k<=12;k++)consider(hintT+k*.0025);}
+  for(let j=0;j<5;j++){const span=1/(512*Math.pow(3,j)),centre=bestT;for(let k=-2;k<=2;k++)consider(centre+k*span);}
+  return{t:bestT,distance:Math.sqrt(best)};
+}
 
 export class SeededRandom {
-  constructor(private state = 0x9e3779b9) {}
-  next() {
-    let x = this.state | 0;
-    x ^= x << 13;
-    x ^= x >>> 17;
-    x ^= x << 5;
-    this.state = x | 0;
-    return (x >>> 0) / 4294967296;
-  }
-}
-
-export function trackPoint(t: number) {
-  const target = (((t % 1) + 1) % 1) * TRACK_LENGTH;
-  let lo = 0, hi = ARC_DISTANCES.length - 1;
-  while(lo < hi) {
-    const mid = (lo + hi) >> 1;
-    if(ARC_DISTANCES[mid] < target) lo = mid + 1;
-    else hi = mid;
-  }
-  const upper = Math.max(1,lo);
-  const lower = upper - 1;
-  const span = ARC_DISTANCES[upper] - ARC_DISTANCES[lower] || 1;
-  const mix = (target - ARC_DISTANCES[lower]) / span;
-  return rawTrackPoint((lower + mix) / ARC_SAMPLES);
-}
-
-export function trackTangent(t: number) {
-  const e = 0.0001;
-  const p = trackPoint(t);
-  const q = trackPoint((t + e) % 1);
-  const l = Math.hypot(q.x-p.x,q.z-p.z) || 1;
-  return {x:(q.x-p.x)/l,z:(q.z-p.z)/l,yaw:Math.atan2(q.x-p.x,q.z-p.z)};
-}
-
-export function trackCurvature(t: number) {
-  const a = trackTangent((t-.006+1)%1).yaw;
-  const b = trackTangent((t+.006)%1).yaw;
-  return Math.abs(wrapAngle(b-a))/.012;
-}
-
-/**
- * Finds the closest circuit point. Supplying a progress hint keeps the hot physics
- * path local to the car's previous position instead of rescanning the whole track.
- * Callers without a reliable hint retain the global search fallback.
- */
-export function nearestTrack(x: number,z: number,hintT?:number) {
-  let best = Infinity, bestT = hintT??0;
-  const consider=(t:number)=>{
-    const wrapped=(t+1)%1,p=trackPoint(wrapped),d=(p.x-x)**2+(p.z-z)**2;
-    if(d<best){best=d;bestT=wrapped;}
-  };
-  if(hintT===undefined) {
-    for(let i=0;i<360;i++) consider(i/360);
-  } else {
-    for(let k=-10;k<=10;k++) consider(hintT+k*.003);
-  }
-  for(let j=0;j<5;j++) {
-    const span=1/(360*Math.pow(3,j));
-    const centre=bestT;
-    for(let k=-2;k<=2;k++) consider(centre+k*span);
-  }
-  return {t:bestT,distance:Math.sqrt(best)};
+  constructor(private state=0x9e3779b9){}
+  next(){let x=this.state|0;x^=x<<13;x^=x>>>17;x^=x<<5;this.state=x|0;return(x>>>0)/4294967296;}
 }
 
 export function surfaceAt(distance: number): Surface {
@@ -139,10 +86,11 @@ export function createCar(
   number:number,
   colour:string,
   grid:number,
-  tuning?:Partial<ConstructorTuning>
+  tuning?:Partial<ConstructorTuning>,
+  trackId:string=DEFAULT_2027_TRACK_ID
 ):CarState {
   const t=(0.982-grid*.0048+1)%1;
-  const p=trackPoint(t),tan=trackTangent(t);
+  const p=trackPoint(t,trackId),tan=trackTangent(t,trackId);
   const lateral=(grid%2?1:-1)*2.05;
   return {
     id,name,number,colour,
@@ -179,9 +127,9 @@ export class RaceSimulation {
   private boundaryContact=new Set<string>();
   private rng:SeededRandom;
 
-  constructor(cars:CarState[], public laps=3, seed=4127, weather:Weather='CLEAR') {
+  constructor(cars:CarState[], public laps=3, seed=4127, weather:Weather='CLEAR', public trackId:string=DEFAULT_2027_TRACK_ID, public championshipRound?:number) {
     this.rng=new SeededRandom(seed);
-    this.state={time:0,tick:0,flag:'GREEN',laps,cars,seed,weather,wetness:weatherWetness(weather),incidents:[]};
+    this.state={time:0,tick:0,flag:'GREEN',laps,cars,seed,weather,wetness:weatherWetness(weather),incidents:[],trackId:this.trackId,championshipRound:this.championshipRound};
     cars.forEach(c=>{this.lapStart.set(c.id,0);this.previousProgress.set(c.id,c.progress);});
   }
 
@@ -204,7 +152,7 @@ export class RaceSimulation {
       car.controls=control;
 
       const hint=this.previousProgress.get(car.id)??car.progress;
-      const near=nearestTrack(car.x,car.z,hint);
+      const near=nearestTrack(car.x,car.z,hint,this.trackId);
       car.surface=surfaceAt(near.distance);
       const surfaceGrip={asphalt:1,kerb:.83,grass:.38,gravel:.24}[car.surface];
       const tyreHealth=1-car.tyres.reduce((s,x)=>s+x.wear,0)/5;
@@ -231,9 +179,9 @@ export class RaceSimulation {
       car.x+=car.vx*dt;
       car.z+=car.vz*dt;
 
-      const bounded=nearestTrack(car.x,car.z,near.t),boundary=TRACK_WIDTH*.5+.76;
+      const bounded=nearestTrack(car.x,car.z,near.t,this.trackId),boundary=TRACK_WIDTH*.5+.76;
       if(bounded.distance>boundary) {
-        const p=trackPoint(bounded.t),tan=trackTangent(bounded.t),dx=car.x-p.x,dz=car.z-p.z;
+        const p=trackPoint(bounded.t,this.trackId),tan=trackTangent(bounded.t,this.trackId),dx=car.x-p.x,dz=car.z-p.z;
         const side=Math.sign(dx*tan.z-dz*tan.x)||1;
         const firstImpact=!this.boundaryContact.has(car.id);
         if(firstImpact) {
@@ -251,7 +199,7 @@ export class RaceSimulation {
       } else {
         if(bounded.distance<boundary*.9)this.boundaryContact.delete(car.id);
         if(car.speed<3&&this.state.time>6&&control.throttle>.25) {
-          const tan=trackTangent(bounded.t);
+          const tan=trackTangent(bounded.t,this.trackId);
           car.yaw=lerpAngle(car.yaw,tan.yaw,.14);
           car.speed+=7*dt;
         }

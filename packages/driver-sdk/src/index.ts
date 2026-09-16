@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { CarState,Control,NeuralTelemetry,RaceState } from '@agp/shared';
-import { TRACK_LENGTH,TRACK_WIDTH,clamp,trackPoint,trackTangent,wrapAngle } from '@agp/sim-core';
+import { TRACK_WIDTH,clamp,trackLength,trackPoint,trackTangent,wrapAngle } from '@agp/sim-core';
 
 export const DecisionSchema=z.object({
   horizonSeconds:z.number().min(.05).max(6),
@@ -40,12 +40,13 @@ export function phenotypeFromSeed(seed:number,id=`FLY-${seed.toString(16).toUppe
 }
 
 export function observe(state:RaceState,car:CarState):DriverObservation{
-  const centre=trackPoint(car.progress),local=trackTangent(car.progress);
+  const trackId=state.trackId;
+  const centre=trackPoint(car.progress,trackId),local=trackTangent(car.progress,trackId),lapLength=trackLength(trackId);
   const lateral=(car.x-centre.x)*local.z-(car.z-centre.z)*local.x;
   const half=TRACK_WIDTH*.5;
   const leftBoundary=clamp(half+lateral,0,TRACK_WIDTH),rightBoundary=clamp(half-lateral,0,TRACK_WIDTH);
   const samples=[0,10,20,40,60,80,120,160,220,300].map(distance=>{
-    const tan=trackTangent((car.progress+distance/TRACK_LENGTH)%1);
+    const tan=trackTangent((car.progress+distance/lapLength)%1,trackId);
     return{distance,headingDelta:wrapAngle(tan.yaw-car.yaw),leftBoundary,rightBoundary};
   });
   return{
