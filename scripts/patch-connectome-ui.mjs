@@ -6,7 +6,11 @@ const once=(needle,replacement)=>{if(source.includes(needle))source=source.repla
 
 once(
   "import { ENTRANTS,TEAMS,teamFor } from './championship';",
-  "import { ENTRANTS,TEAMS,teamFor } from './championship';\nimport { WeekendPanel,type WeekendStage } from './WeekendPanel';"
+  "import { ENTRANTS,TEAMS,teamFor } from './championship';\nimport { WeekendPanel,type WeekendStage } from './WeekendPanel';\nimport { PhenotypeInspector } from './PhenotypeInspector';"
+);
+once(
+  "import { ENTRANTS,TEAMS,teamFor } from './championship';\nimport { WeekendPanel,type WeekendStage } from './WeekendPanel';",
+  "import { ENTRANTS,TEAMS,teamFor } from './championship';\nimport { WeekendPanel,type WeekendStage } from './WeekendPanel';\nimport { PhenotypeInspector } from './PhenotypeInspector';"
 );
 once(
   "type Screen='title'|'home'|'setup'|'race'|'replays'|'garage'|'championship'|'drivers'|'connectome';",
@@ -39,6 +43,10 @@ once(
 once(
   "<button className=\"mode\" onClick={()=>onMode('GRAND_PRIX')}><small>02 · CHAMPIONSHIP</small><strong>GRAND PRIX</strong><span>Score Drivers + Constructors points.</span><b>→</b></button>",
   "<button className=\"mode\" onClick={onWeekend}><small>02 · WEEKEND</small><strong>RACE WEEKEND</strong><span>Practice → Qualifying → Grand Prix.</span><b>→</b></button>"
+);
+once(
+  "</div><div className=\"cwc-integrity\"><div><strong>REAL CONNECTOME TARGET</strong>",
+  "</div><PhenotypeInspector driver={d}/><div className=\"cwc-integrity\"><div><strong>REAL CONNECTOME TARGET</strong>"
 );
 source=source.replace(
   '<div className="race-progress"><i style={{width:`${progress}%`}}/></header>',
