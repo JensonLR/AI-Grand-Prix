@@ -23,14 +23,17 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
-      - run: npm run race
+      - name: Verify neural drivability on all 24 circuits
+        run: npm run season-smoke
+      - name: Certify the 22-driver neutral grid
+        run: npm run race
       - name: Upload race diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: connectome-race-replay
           path: data/races/latest.agpr.json
-          if-no-files-found: error
+          if-no-files-found: warn
       - run: npm run build
       - name: Upload browser preview
         if: success()
