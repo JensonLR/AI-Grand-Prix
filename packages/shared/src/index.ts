@@ -28,6 +28,7 @@ export interface RaceConfig {
   weather: Weather;
   seed: number;
   humanCarId?: string;
+  gridOrder?: string[];
 }
 
 export interface Control {
