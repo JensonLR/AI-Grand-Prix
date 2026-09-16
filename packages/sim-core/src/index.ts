@@ -99,20 +99,26 @@ export function trackCurvature(t: number) {
   return Math.abs(wrapAngle(b-a))/.012;
 }
 
-export function nearestTrack(x: number,z: number) {
-  let best = Infinity, bestT = 0;
-  for(let i=0;i<360;i++) {
-    const t=i/360,p=trackPoint(t),d=(p.x-x)**2+(p.z-z)**2;
-    if(d<best){best=d;bestT=t;}
+/**
+ * Finds the closest circuit point. Supplying a progress hint keeps the hot physics
+ * path local to the car's previous position instead of rescanning the whole track.
+ * Callers without a reliable hint retain the global search fallback.
+ */
+export function nearestTrack(x: number,z: number,hintT?:number) {
+  let best = Infinity, bestT = hintT??0;
+  const consider=(t:number)=>{
+    const wrapped=(t+1)%1,p=trackPoint(wrapped),d=(p.x-x)**2+(p.z-z)**2;
+    if(d<best){best=d;bestT=wrapped;}
+  };
+  if(hintT===undefined) {
+    for(let i=0;i<360;i++) consider(i/360);
+  } else {
+    for(let k=-10;k<=10;k++) consider(hintT+k*.003);
   }
   for(let j=0;j<5;j++) {
     const span=1/(360*Math.pow(3,j));
-    let chosen=bestT;
-    for(let k=-2;k<=2;k++) {
-      const t=(bestT+k*span+1)%1,p=trackPoint(t),d=(p.x-x)**2+(p.z-z)**2;
-      if(d<best){best=d;chosen=t;}
-    }
-    bestT=chosen;
+    const centre=bestT;
+    for(let k=-2;k<=2;k++) consider(centre+k*span);
   }
   return {t:bestT,distance:Math.sqrt(best)};
 }
@@ -170,6 +176,7 @@ export class RaceSimulation {
   private lapStart=new Map<string,number>();
   private previousProgress=new Map<string,number>();
   private started=new Set<string>();
+  private boundaryContact=new Set<string>();
   private rng:SeededRandom;
 
   constructor(cars:CarState[], public laps=3, seed=4127, weather:Weather='CLEAR') {
@@ -196,7 +203,8 @@ export class RaceSimulation {
       };
       car.controls=control;
 
-      const near=nearestTrack(car.x,car.z);
+      const hint=this.previousProgress.get(car.id)??car.progress;
+      const near=nearestTrack(car.x,car.z,hint);
       car.surface=surfaceAt(near.distance);
       const surfaceGrip={asphalt:1,kerb:.83,grass:.38,gravel:.24}[car.surface];
       const tyreHealth=1-car.tyres.reduce((s,x)=>s+x.wear,0)/5;
@@ -223,21 +231,30 @@ export class RaceSimulation {
       car.x+=car.vx*dt;
       car.z+=car.vz*dt;
 
-      const bounded=nearestTrack(car.x,car.z),boundary=TRACK_WIDTH*.5+.76;
+      const bounded=nearestTrack(car.x,car.z,near.t),boundary=TRACK_WIDTH*.5+.76;
       if(bounded.distance>boundary) {
         const p=trackPoint(bounded.t),tan=trackTangent(bounded.t),dx=car.x-p.x,dz=car.z-p.z;
         const side=Math.sign(dx*tan.z-dz*tan.x)||1;
+        const firstImpact=!this.boundaryContact.has(car.id);
+        if(firstImpact) {
+          this.boundaryContact.add(car.id);
+          const impact=clamp((car.speed-10)/75,0,1);
+          const damage=(.0025+impact*.012)/t.reliability;
+          car.damage=clamp(car.damage+damage,0,1);
+          car.frontWing=clamp(car.frontWing-damage*1.35,.45,1);
+          if(impact>.12)this.incident('OFF_TRACK',[car.id],impact>.62?'MEDIUM':'LOW',car.lap);
+        }
         car.x=p.x+tan.z*boundary*side;
         car.z=p.z-tan.x*boundary*side;
-        car.speed=Math.max(5,car.speed*.77);
-        car.yaw=lerpAngle(car.yaw,tan.yaw,.66);
-        car.damage=clamp(car.damage+.0012/t.reliability,0,1);
-        car.frontWing=clamp(car.frontWing-.0007/t.reliability,.45,1);
-        if(this.state.tick%360===0)this.incident('OFF_TRACK',[car.id],'LOW',car.lap);
-      } else if(car.speed<3&&this.state.time>6&&control.throttle>.25) {
-        const tan=trackTangent(bounded.t);
-        car.yaw=lerpAngle(car.yaw,tan.yaw,.14);
-        car.speed+=7*dt;
+        car.speed=Math.max(5,car.speed*(firstImpact?.86:.965));
+        car.yaw=lerpAngle(car.yaw,tan.yaw,firstImpact?.58:.22);
+      } else {
+        if(bounded.distance<boundary*.9)this.boundaryContact.delete(car.id);
+        if(car.speed<3&&this.state.time>6&&control.throttle>.25) {
+          const tan=trackTangent(bounded.t);
+          car.yaw=lerpAngle(car.yaw,tan.yaw,.14);
+          car.speed+=7*dt;
+        }
       }
 
       car.battery=clamp(car.battery-deploy*.011*dt+(1-control.throttle)*.0032*dt*t.energySystem,0,1);
@@ -254,10 +271,11 @@ export class RaceSimulation {
       }
       if(car.tyres.some(x=>x.punctured))car.speed=Math.min(car.speed,36);
 
-      const prev=this.previousProgress.get(car.id)??near.t;
-      car.progress=near.t;
-      car.sector=Math.min(3,Math.floor(near.t*3)+1);
-      if(prev>.92&&near.t<.08&&this.state.time>1) {
+      const prev=this.previousProgress.get(car.id)??bounded.t;
+      car.progress=bounded.t;
+      car.surface=surfaceAt(bounded.distance);
+      car.sector=Math.min(3,Math.floor(bounded.t*3)+1);
+      if(prev>.92&&bounded.t<.08&&this.state.time>1) {
         if(!this.started.has(car.id)) {
           this.started.add(car.id);this.lapStart.set(car.id,this.state.time);
         } else {
@@ -273,7 +291,7 @@ export class RaceSimulation {
           }
         }
       }
-      this.previousProgress.set(car.id,near.t);
+      this.previousProgress.set(car.id,bounded.t);
     }
 
     // Low-restitution contact. Car placement is resolved before damage is applied.
@@ -286,9 +304,9 @@ export class RaceSimulation {
         a.x-=nx*push;a.z-=nz*push;b.x+=nx*push;b.z+=nz*push;
         a.speed*=relative>9?.974:.995;b.speed*=relative>9?.974:.995;
         if(relative>4) {
-          const damage=clamp((relative-4)*.0002,.0002,.0038);
+          const damage=clamp((relative-4)*.00012,.0001,.0024);
           a.damage=clamp(a.damage+damage,0,1);b.damage=clamp(b.damage+damage,0,1);
-          a.frontWing=clamp(a.frontWing-damage*.9,.35,1);b.frontWing=clamp(b.frontWing-damage*.9,.35,1);
+          a.frontWing=clamp(a.frontWing-damage*.75,.35,1);b.frontWing=clamp(b.frontWing-damage*.75,.35,1);
         }
         if(this.state.tick%180===0&&relative>5)this.incident('CONTACT',[a.id,b.id],relative>14?'HIGH':'MEDIUM',Math.max(a.lap,b.lap));
       }
