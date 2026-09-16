@@ -10,6 +10,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: npm }
       - run: npm ci
+      - name: Apply validated connectome UI patches
+        run: node scripts/patch-connectome-ui.mjs
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
