@@ -1,0 +1,51 @@
+name: BANC v888 projection
+on:
+  push:
+    branches: [connectome-world-championship]
+    paths:
+      - scripts/build_banc_projection.py
+      - .github/workflows/banc-v888.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build-projection:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install projection dependencies
+        run: pip install pyarrow==21.0.0 pandas==2.3.2
+      - name: Build real BANC v888 sensorimotor projection
+        run: python scripts/build_banc_projection.py
+      - name: Inspect projection
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('data/connectome/banc-v888-sensorimotor.json')
+          d=json.loads(p.read_text())
+          assert d['schema']=='BANC-V888-SENSORIMOTOR-PROJECTION/1'
+          assert d['stats']['selectedNeurons']>0
+          assert d['stats']['populations']>0
+          assert d['stats']['populationEdges']>0
+          print(d['stats'])
+          print(f'projection bytes={p.stat().st_size}')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: banc-v888-sensorimotor-projection
+          path: data/connectome/banc-v888-sensorimotor.json
+          retention-days: 90
+      - name: Persist projection on championship branch
+        run: |
+          git config user.name "AGP BANC Builder"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/connectome/banc-v888-sensorimotor.json apps/web/public/connectome/banc-v888-sensorimotor.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Persist real BANC v888 sensorimotor projection [skip ci]"
+            git push origin HEAD:connectome-world-championship
+          fi
