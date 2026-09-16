@@ -26,7 +26,7 @@ const roster=[
 
 const states=roster.map((e,i)=>{const team=teams[e[3]],c=createCar(e[0],e[1],e[2],team.colour,i,team.t);c.teamId=e[3];c.teamName=team.name;return c;});
 const sim=new RaceSimulation(states,3,4127,'CLEAR');
-const drivers=new Map(roster.map(e=>[e[0],new DeterministicDriver(e[0],e[1])] as const));
+const drivers=new Map<string,DeterministicDriver>(roster.map(e=>[e[0],new DeterministicDriver(e[0],e[1])]));
 const controls=new Map<string,Control>(),frames:ReplayFile['frames']=[],events:unknown[]=[];
 const capture=()=>({t:+sim.state.time.toFixed(3),cars:sim.state.cars.map(c=>({id:c.id,x:+c.x.toFixed(3),z:+c.z.toFixed(3),yaw:+c.yaw.toFixed(5),speed:+c.speed.toFixed(2),lap:c.lap,position:c.position,status:c.status,damage:+c.damage.toFixed(3),compound:c.compound,neural:c.neural?{activeNeurons:c.neural.activeNeurons,spikeRate:c.neural.spikeRate,visualActivity:c.neural.visualActivity,descendingActivity:c.neural.descendingActivity,steeringOutput:c.neural.steeringOutput,throttleOutput:c.neural.throttleOutput,brakeOutput:c.neural.brakeOutput}:undefined}))});
 
