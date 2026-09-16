@@ -18,7 +18,7 @@ once(
 );
 once(
   "  const ordered=useMemo(()=>[...state.cars].sort((a,b)=>a.position-b.position),[state.cars]),focused=state.cars.find(c=>c.id===focus)??ordered[0];",
-  "  useEffect(()=>{if(state.flag!=='CHEQUERED'||raceKind!=='live'||!weekendStage)return;setWeekendCompleted(old=>old.includes(weekendStage)?old:[...old,weekendStage]);if(weekendStage==='QUALIFYING'){setQualifyingOrder([...state.cars].sort((a,b)=>(a.bestLap??Infinity)-(b.bestLap??Infinity)||a.position-b.position).map(c=>c.id));}},[state.flag,state.cars,raceKind,weekendStage]);\n  const ordered=useMemo(()=>[...state.cars].sort((a,b)=>a.position-b.position),[state.cars]),focused=state.cars.find(c=>c.id===focus)??ordered[0];"
+  "  useEffect(()=>{if(state.flag!=='CHEQUERED'||raceKind!=='live'||!weekendStage||weekendCompleted.includes(weekendStage))return;setWeekendCompleted(old=>[...old,weekendStage]);if(weekendStage==='QUALIFYING'){setQualifyingOrder([...state.cars].sort((a,b)=>(a.bestLap??Infinity)-(b.bestLap??Infinity)||a.position-b.position).map(c=>c.id));}},[state.flag,state.cars,raceKind,weekendStage,weekendCompleted]);\n  const ordered=useMemo(()=>[...state.cars].sort((a,b)=>a.position-b.position),[state.cars]),focused=state.cars.find(c=>c.id===focus)??ordered[0];"
 );
 once(
   "  const launch=()=>{saved.current='';const human=config.session==='HUMAN_TEST';setRaceKind(human?'human':'live');const id=human?'human':ENTRANTS[0].id;setFocus(id);scene.current?.startRace(config);const cam:CameraMode=human?'cockpit':'broadcast';scene.current?.setCamera(cam);setCameraState(cam);setScreen('race');armStart()};",
@@ -27,10 +27,6 @@ once(
 once(
   "{screen==='title'&&<Title onEnter={()=>setScreen('home')}/>} {screen==='home'&&<Home onMode={prepare} onReplay={watchReplay} onNavigate={navigate} error={error}/>} {screen==='setup'&&",
   "{screen==='title'&&<Title onEnter={()=>setScreen('home')}/>} {screen==='home'&&<Home onMode={prepare} onWeekend={openWeekend} onReplay={watchReplay} onNavigate={navigate} error={error}/>} {screen==='weekend'&&<WeekendPanel completed={weekendCompleted} qualifyingOrder={qualifyingOrder} onRun={runWeekend} onBack={()=>navigate('home')}/>} {screen==='setup'&&"
-);
-once(
-  "{screen==='race'&&<RaceBroadcast state={state}",
-  "{screen==='race'&&<RaceBroadcast state={state}"
 );
 once(
   "onRestart={()=>{scene.current?.restart();armStart()}}/>}\n  </main>",
