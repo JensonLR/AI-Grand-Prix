@@ -34,7 +34,9 @@ export function hashSeed(text:string){let h=2166136261>>>0;for(const ch of text)
 class PRNG{constructor(private s:number){}next(){let x=this.s|0;x^=x<<13;x^=x>>>17;x^=x<<5;this.s=x|0;return(x>>>0)/4294967296;}sym(){return this.next()*2-1;}}
 export function phenotypeFromSeed(seed:number,id=`FLY-${seed.toString(16).toUpperCase().padStart(8,'0')}`):Phenotype{
   const r=new PRNG(seed||1),bounded=(span:number)=>1+r.sym()*span;
-  return{id,seed,firingThreshold:bounded(.045),membraneLeak:bounded(.035),synapticGain:bounded(.04),sensoryNoise:.006+r.next()*.012,conductionDelay:.92+r.next()*.16,adaptation:.94+r.next()*.12,plasticityRate:.004+r.next()*.006,decoderCalibration:.985+r.next()*.03};
+  // Variation is deliberately biological but narrow. The previous wider envelope amplified
+  // small seeded differences into a >50% lap-time spread despite identical topology.
+  return{id,seed,firingThreshold:bounded(.018),membraneLeak:bounded(.016),synapticGain:bounded(.020),sensoryNoise:.005+r.next()*.006,conductionDelay:.96+r.next()*.08,adaptation:.975+r.next()*.05,plasticityRate:.0045+r.next()*.003,decoderCalibration:.993+r.next()*.014};
 }
 
 export function observe(state:RaceState,car:CarState):DriverObservation{
@@ -57,17 +59,20 @@ export function observe(state:RaceState,car:CarState):DriverObservation{
 const N=48,SENSOR_COUNT=12;
 const OUTPUT_LEFT=42,OUTPUT_RIGHT=43,OUTPUT_THROTTLE=44,OUTPUT_BRAKE=45,OUTPUT_ENERGY=46,OUTPUT_STABILITY=47;
 const mean=(a:Float64Array,ids:number[])=>ids.reduce((n,i)=>n+a[i],0)/ids.length;
+const hiddenIds=Array.from({length:30},(_,i)=>i+12);
 
 /**
  * Compact AGP neural simulation interface.
  * One shared LIF-inspired topology is used by every driver; phenotype variation is bounded.
  * The motor readout consumes neural activity only. Track geometry exists only upstream in the sensory encoder.
+ * A slow homeostatic gain keeps different phenotypes inside a viable firing-rate envelope without
+ * making their control signals identical or bypassing the neural network.
  */
 export class AGPConnectomeDriver implements DriverAdapter{
   provider='AGP LOCAL NEURAL INTERFACE';displayName:string;readonly phenotype:Phenotype;
   private v=new Float64Array(N);private spike=new Float64Array(N);private activity=new Float64Array(N);
   private weights=Array.from({length:N},()=>new Float64Array(N));private baseline=new Float64Array(N);
-  private lastSteer=0;private adaptedReadout=new Float64Array(5);private rng:PRNG;
+  private lastSteer=0;private adaptedReadout=new Float64Array(5);private rng:PRNG;private homeostaticGain=1;
 
   constructor(public id:string,name:string,legacySalt=0){
     this.displayName=name;const seed=(hashSeed(id)^(Math.round(legacySalt*1000)>>>0))>>>0;
@@ -81,7 +86,7 @@ export class AGPConnectomeDriver implements DriverAdapter{
       this.baseline[i]=.015+topo.next()*.018;
       for(let j=0;j<N;j++){
         const local=Math.abs(i-j)<=3,recurrent=i>=SENSOR_COUNT&&j>=SENSOR_COUNT&&topo.next()<.10;
-        if(local||recurrent)this.weights[i][j]=(topo.sym()*.105)*(1+new PRNG(seed+i*97+j*131).sym()*.025);
+        if(local||recurrent)this.weights[i][j]=(topo.sym()*.105)*(1+new PRNG(seed+i*97+j*131).sym()*.012);
       }
     }
     const link=(from:number,to:number,w:number)=>{this.weights[to][from]+=w;};
@@ -114,13 +119,16 @@ export class AGPConnectomeDriver implements DriverAdapter{
     for(let i=0;i<N;i++){
       let input=this.baseline[i];if(i<SENSOR_COUNT)input+=sensors[i]*1.0;
       for(let j=0;j<N;j++)input+=this.spike[j]*this.weights[i][j]*p.synapticGain;
+      input*=this.homeostaticGain;
       const leak=.79+.13*p.membraneLeak,threshold=.66*p.firingThreshold;let v=this.v[i]*leak+input*.23;
       if(v>threshold){next[i]=1;v*=.20;spikes++;}else next[i]=Math.max(0,v/threshold)*.38;
       this.v[i]=v*p.adaptation;
-      // Persistent population activity prevents a useful signal vanishing merely because the last substep was between spikes.
       this.activity[i]=this.activity[i]*.68+next[i]*.32;
     }
-    this.spike=next;return spikes;
+    this.spike=next;
+    const hiddenMean=mean(this.activity,hiddenIds);
+    this.homeostaticGain=clamp(this.homeostaticGain+(.17-hiddenMean)*.0035,.90,1.10);
+    return spikes;
   }
 
   private decode(o:DriverObservation){
@@ -130,19 +138,23 @@ export class AGPConnectomeDriver implements DriverAdapter{
     const go=mean(this.activity,[8,24,OUTPUT_THROTTLE]);
     const slow=mean(this.activity,[9,10,25,26,OUTPUT_BRAKE,OUTPUT_STABILITY]);
     const energy=mean(this.activity,[8,24,OUTPUT_THROTTLE,OUTPUT_ENERGY]);
-    const steerRaw=(right-left)*4.1*this.phenotype.decoderCalibration+this.adaptedReadout[0];
-    const steering=clamp(this.lastSteer*.32+steerRaw*.68,-1,1);this.lastSteer=steering;
-    const throttle=clamp(.20+go*1.55-slow*.58+this.adaptedReadout[1],0,1);
-    const brake=clamp(slow*1.25-go*.18-.09+this.adaptedReadout[2],0,1);
-    const energyDeploy=clamp(energy*1.15-.12+this.adaptedReadout[3],0,1);
+    const steeringDrive=mean(this.activity,[0,1,2,3,4,5,16,17,20,21]);
+    const longitudinalDrive=mean(this.activity,[8,9,10,24,25,26,OUTPUT_THROTTLE,OUTPUT_BRAKE]);
+    const steeringNorm=clamp(.18/(steeringDrive+.08),.90,1.10);
+    const longitudinalNorm=clamp(.18/(longitudinalDrive+.08),.88,1.12);
+    const steerRaw=(right-left)*4.0*this.phenotype.decoderCalibration*steeringNorm+this.adaptedReadout[0];
+    const steering=clamp(this.lastSteer*.34+steerRaw*.66,-1,1);this.lastSteer=steering;
+    const throttle=clamp(.24+go*1.48*longitudinalNorm-slow*.54+this.adaptedReadout[1],0,1);
+    const brake=clamp(slow*1.18/longitudinalNorm-go*.16-.10+this.adaptedReadout[2],0,1);
+    const energyDeploy=clamp(energy*1.12*longitudinalNorm-.11+this.adaptedReadout[3],0,1);
     const clean=o.car.surface==='asphalt'&&o.car.damage<.15,reinforcement=clean?clamp((o.car.speed/94)-Math.abs(steering)*.06,0,1):-.45;
-    this.adaptedReadout[1]=clamp(this.adaptedReadout[1]+reinforcement*this.phenotype.plasticityRate*.002,-.04,.04);
-    this.adaptedReadout[2]=clamp(this.adaptedReadout[2]+(clean?-.2:.6)*this.phenotype.plasticityRate*.001,-.03,.05);
+    this.adaptedReadout[1]=clamp(this.adaptedReadout[1]+reinforcement*this.phenotype.plasticityRate*.002,-.035,.035);
+    this.adaptedReadout[2]=clamp(this.adaptedReadout[2]+(clean?-.2:.6)*this.phenotype.plasticityRate*.001,-.025,.045);
     return{steering,throttle,brake,energyDeploy,reinforcement};
   }
 
   async decide(o:DriverObservation):Promise<DriverDecision>{
-    const started=performanceNow(),sensors=this.sensoryEncode(o),substeps=Math.max(4,Math.round(6*this.phenotype.conductionDelay));let spikeCount=0;
+    const started=performanceNow(),sensors=this.sensoryEncode(o),substeps=Math.max(5,Math.round(6*this.phenotype.conductionDelay));let spikeCount=0;
     for(let i=0;i<substeps;i++)spikeCount+=this.runNeuralStep(sensors);
     const out=this.decode(o),elapsed=Math.max(.02,performanceNow()-started),active=Array.from(this.activity).filter(v=>v>.08).length;
     const telemetry:NeuralTelemetry={phenotypeId:this.phenotype.id,source:'AGP_SIMULATION_INTERFACE',activeNeurons:active,spikeRate:+((spikeCount/substeps)*20).toFixed(1),visualActivity:+(sensors.slice(0,8).reduce((a,b)=>a+b,0)/8).toFixed(3),descendingActivity:+mean(this.activity,[OUTPUT_LEFT,OUTPUT_RIGHT,OUTPUT_THROTTLE,OUTPUT_BRAKE]).toFixed(3),steeringOutput:+out.steering.toFixed(3),throttleOutput:+out.throttle.toFixed(3),brakeOutput:+out.brake.toFixed(3),reinforcementSignal:+out.reinforcement.toFixed(3),interfaceLatencyMs:+elapsed.toFixed(2),connectomeSimRate:substeps*20};
