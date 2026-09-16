@@ -10,7 +10,8 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "lint": "eslint .",
-    "race": "tsx apps/race-runner/src/index.ts"
+    "race": "tsx apps/race-runner/src/index.ts",
+    "season-smoke": "tsx apps/race-runner/src/season-smoke.ts"
   },
   "devDependencies": {
     "@eslint/js": "9.35.0",
