@@ -1,5 +1,5 @@
 import type { Control,RaceIncident,TyreCompound } from '@agp/shared';
-import { RaceSimulation,FIXED_DT,clamp } from './index.ts';
+import { RaceSimulation,FIXED_DT,clamp } from '@agp/sim-core';
 
 type PitPhase='REQUESTED'|'ENTRY'|'STOP'|'EXIT';
 interface PitRuntime {phase:PitPhase;timer:number;target:TyreCompound;stopX?:number;stopZ?:number;}
