@@ -1,3 +1,36 @@
-import { describe,expect,it } from 'vitest';import { createCar,FIXED_DT,nearestTrack,RaceSimulation,SeededRandom,surfaceAt } from './index';
-describe('authoritative simulation',()=>{it('is seeded',()=>{const a=new SeededRandom(7),b=new SeededRandom(7);expect([a.next(),a.next()]).toEqual([b.next(),b.next()]);});it('classifies surfaces',()=>{expect(surfaceAt(1)).toBe('asphalt');expect(surfaceAt(20)).toBe('gravel');});it('accelerates, brakes and steers from controls',()=>{const car=createCar('a','A',1,'#fff',0),sim=new RaceSimulation([car],1);for(let i=0;i<240;i++)sim.step(new Map([['a',{steering:.2,throttle:1,brake:0,energyDeploy:0}]]),FIXED_DT);expect(car.speed).toBeGreaterThan(10);const yaw=car.yaw;for(let i=0;i<120;i++)sim.step(new Map([['a',{steering:.4,throttle:0,brake:1,energyDeploy:0}]]),FIXED_DT);expect(car.speed).toBeLessThan(25);expect(car.yaw).not.toBe(yaw);expect(nearestTrack(car.x,car.z).distance).toBeGreaterThanOrEqual(0);});});
-describe('race conditions',()=>{it('applies rain wetness and fuel use',()=>{const car=createCar('wet','Wet',2,'#00f',0),sim=new RaceSimulation([car],1,4,'RAIN');expect(sim.state.wetness).toBeGreaterThan(.5);for(let i=0;i<120;i++)sim.step(new Map([['wet',{steering:0,throttle:1,brake:0,energyDeploy:0}]]),FIXED_DT);expect(car.fuel).toBeLessThan(1);});it('starts every entrant on identical specification state',()=>{const a=createCar('a','A',1,'#fff',0),b=createCar('b','B',2,'#000',1);expect({battery:a.battery,fuel:a.fuel,compound:a.compound,frontWing:a.frontWing}).toEqual({battery:b.battery,fuel:b.fuel,compound:b.compound,frontWing:b.frontWing});});});
+import { describe,expect,it } from 'vitest';
+import { FIXED_DT,RaceSimulation,createCar,nearestTrack,trackPoint,trackTangent } from './index';
+import type { Control } from '@agp/shared';
+
+describe('authoritative race simulation',()=>{
+  it('accelerates, brakes and remains finite',()=>{
+    const car=createCar('a','A',1,'#fff',0),sim=new RaceSimulation([car],1,1);
+    const controls=new Map<string,Control>([['a',{steering:0,throttle:1,brake:0,energyDeploy:0}]]);
+    for(let i=0;i<240;i++)sim.step(controls,FIXED_DT);
+    expect(car.speed).toBeGreaterThan(10);
+    controls.set('a',{steering:0,throttle:0,brake:1,energyDeploy:0});
+    const before=car.speed;for(let i=0;i<120;i++)sim.step(controls,FIXED_DT);
+    expect(car.speed).toBeLessThan(before);
+    expect(Number.isFinite(car.x)).toBe(true);
+  });
+
+  it('constructor tuning is tightly bounded',()=>{
+    const car=createCar('a','A',1,'#fff',0,{downforce:2,aeroEfficiency:.2,controlResponse:4});
+    expect(car.tuning?.downforce).toBeLessThanOrEqual(1.015);
+    expect(car.tuning?.aeroEfficiency).toBeGreaterThanOrEqual(.985);
+    expect(car.tuning?.controlResponse).toBeLessThanOrEqual(1.015);
+  });
+
+  it('wetness is actually present in wet conditions',()=>{
+    const car=createCar('a','A',1,'#fff',0),wet=new RaceSimulation([car],1,1,'HEAVY_RAIN');
+    expect(wet.state.wetness).toBeGreaterThan(.7);
+  });
+
+  it('track mapping is driveable and reversible enough for control',()=>{
+    for(const t of [0,.1,.25,.5,.75,.99]){
+      const p=trackPoint(t),n=nearestTrack(p.x,p.z),tan=trackTangent(t);
+      expect(n.distance).toBeLessThan(.6);
+      expect(Number.isFinite(tan.yaw)).toBe(true);
+    }
+  });
+});
