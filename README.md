@@ -4,7 +4,7 @@
 
 AI Grand Prix is an open, zero-cost-first racing simulation in which driver models control identical AGP-01 cars through real steering, throttle, brake and energy commands. Race results come from the simulation, never external benchmark scores.
 
-This repository currently contains the first playable engineering slice: a deterministic 120 Hz authoritative simulation, four-car offline exhibition, procedural Three.js Azure Coast world and AGP-01, broadcast cameras and timing, strict driver protocol, local-model adapters, headless race runner, replay output and automated checks. It is an honest foundation, not yet the complete championship described in the roadmap.
+This repository contains a browser-playable racing product built on a deterministic 120 Hz authoritative simulation. It includes live configurable races, a seekable bundled replay, six development entrants, a human test-drive mode, five broadcast/onboard cameras, weather grip, tyres, energy, damage, incidents, timing, track map, results, garage and championship surfaces, the procedural Azure Coast world and AGP-01, strict driver protocol, local-model adapters, a headless race runner and automated checks.
 
 ## Run it
 
@@ -25,7 +25,7 @@ npm run lint
 npm run race
 ```
 
-`npm run race` simulates an offline race without rendering or model calls and writes `data/races/latest.agpr.json`. Replays are simulation output and can be watched repeatedly with zero inference calls. A file-backed replay browser is the next delivery milestone.
+`npm run race` simulates an offline race without rendering or model calls and writes `data/races/latest.agpr.json`. The browser's Race Archive loads `apps/web/public/replays/demo.agpr.json`; it can be paused, sought, accelerated and viewed from different cameras with zero inference calls.
 
 ## Architecture
 
@@ -62,10 +62,10 @@ The current exhibition is `NON-BENCHMARK` because it uses deterministic developm
 
 ## Static deployment
 
-`npm run build` emits `apps/web/dist`, suitable for a static host. Public spectators consume precomputed race data; they do not trigger AI requests.
+`npm run build` emits `apps/web/dist`, suitable for a static host. A GitHub Pages workflow deploys the spectator when `main` changes. Public spectators consume precomputed race data; they do not trigger AI requests.
 
 ## Current limitations
 
-The current vehicle model is a credible lightweight planar model, not yet WASM rigid-body dynamics. Suspension is represented visually but independent wheel contact and component breakage remain roadmap work. Pits, weather, qualifying, full replay seek, human drive, safety car, complete damage meshes, audio and championship persistence are not yet implemented. The procedural car and circuit are deliberately authored foundations that still need a production art pass.
+The current vehicle model is a credible lightweight planar model, not yet WASM rigid-body dynamics. Suspension is represented visually but independent wheel contact and detachable component breakage remain roadmap work. Weather grip, live race control, human driving and replay seeking are present; full pit-lane choreography, staged practice/qualifying, safety car logic, production audio sampling, persistent championship storage and commercial-provider orchestration still require further engineering. The procedural car and circuit are deliberately authored, but a future production art pass can take them beyond code-generated geometry.
 
 See [architecture](docs/architecture.md), [physics](docs/physics.md), [driver protocol](docs/ai-driver-protocol.md), [provider setup](docs/provider-setup.md) and [roadmap](docs/roadmap.md).
