@@ -3,7 +3,7 @@ import { dirname,resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createCar,FIXED_DT } from '@agp/sim-core';
 import { ChampionshipRaceSimulation } from '@agp/sim-core/championship';
-import { DeterministicDriver,decisionToControl,observe } from '@agp/driver-sdk';
+import { DeterministicDriver,decisionToControl,observe,academyQualificationMetric,academyCandidateSeeds } from '@agp/driver-sdk';
 import { VERSION,type ConstructorTuning,type Control,type ReplayFile } from '@agp/shared';
 
 const here=dirname(fileURLToPath(import.meta.url)),root=resolve(here,'../../..');
@@ -41,7 +41,23 @@ for(const c of [...sim.state.cars].sort((a,b)=>a.position-b.position))events.pus
 for(const incident of sim.state.incidents)events.push(incident);
 const replay:ReplayFile={format:'AGPR/1',createdAt:new Date().toISOString(),classification:'NON-BENCHMARK',reason:'AGP compact neural simulation interface. Full BANC v888 runtime is not active.',versions:VERSION,seed:sim.state.seed,laps:sim.laps,frames,events};
 for(const output of [resolve(root,'data/races/latest.agpr.json'),resolve(root,'apps/web/public/replays/demo.agpr.json')]){await mkdir(dirname(output),{recursive:true});await writeFile(output,JSON.stringify(replay));console.log(`Replay: ${output}`);}
+
 const finishers=sim.state.cars.filter(c=>c.status==='FINISHED').length;
-console.log(`Race complete: ${sim.state.time.toFixed(2)}s · ${frames.length} frames · ${finishers}/22 finishers`);
+const validBest=sim.state.cars.map(c=>c.bestLap).filter((v):v is number=>v!=null&&Number.isFinite(v));
+const benchmarkBest=Math.min(...validBest);
+const licences=sim.state.cars.map(car=>{
+  const offTrack=sim.state.incidents.filter(i=>i.type==='OFF_TRACK'&&i.cars.includes(car.id)).length;
+  const collisions=sim.state.incidents.filter(i=>i.type==='CONTACT'&&i.cars.includes(car.id)).length;
+  const lapCompletion=car.status==='FINISHED'?1:Math.min(1,(car.lap+car.progress)/sim.laps);
+  const offTrackRate=offTrack/Math.max(1,frames.length);
+  const collisionRate=collisions/Math.max(1,frames.length);
+  const paceRatio=car.bestLap&&Number.isFinite(benchmarkBest)?Math.min(1,benchmarkBest/car.bestLap):0;
+  return {id:car.id,phenotypeId:car.neural?.phenotypeId??drivers.get(car.id)?.phenotype.id,status:academyQualificationMetric(lapCompletion,offTrackRate,collisionRate,paceRatio)?'QUALIFIED':'FAILED',lapCompletion:+lapCompletion.toFixed(4),offTrackRate:+offTrackRate.toFixed(5),collisionRate:+collisionRate.toFixed(5),paceRatio:+paceRatio.toFixed(4),bestLap:car.bestLap,damage:+car.damage.toFixed(3),pitStops:car.pitStops};
+});
+const academySeeds=academyCandidateSeeds(160,0xA6C2026);
+const licenceFile={format:'AGP-SUPER-LICENCE/1',createdAt:new Date().toISOString(),simulation:VERSION.sim,track:VERSION.track,seed:sim.state.seed,candidateGenerator:{configuredPopulation:160,seed:'0x0A6C2026',firstCandidate:academySeeds[0],lastCandidate:academySeeds.at(-1),note:'Population generation is deterministic. This file certifies the named championship roster from the measured neutral competence race; it does not claim all 160 generated candidates completed full track evaluation.'},gates:{lapCompletion:0.96,maxOffTrackRate:0.08,maxCollisionRate:0.04,minPaceRatio:0.72},drivers:licences};
+for(const output of [resolve(root,'data/connectome/super-licence.json'),resolve(root,'apps/web/public/connectome/super-licence.json')]){await mkdir(dirname(output),{recursive:true});await writeFile(output,JSON.stringify(licenceFile,null,2));console.log(`Super Licence: ${output}`);}
+const qualified=licences.filter(l=>l.status==='QUALIFIED').length;
+console.log(`Race complete: ${sim.state.time.toFixed(2)}s · ${frames.length} frames · ${finishers}/22 finishers · ${qualified}/22 licensed`);
 console.log('Final driver state:',JSON.stringify([...sim.state.cars].sort((a,b)=>a.position-b.position).map(c=>({id:c.id,position:c.position,lap:c.lap,progress:+c.progress.toFixed(3),speed:+c.speed.toFixed(1),damage:+c.damage.toFixed(3),surface:c.surface,pitStops:c.pitStops,compound:c.compound,steer:+c.controls.steering.toFixed(2),throttle:+c.controls.throttle.toFixed(2),brake:+c.controls.brake.toFixed(2)}))));
-if(finishers!==22){console.error(`AGP Super Licence smoke race failed: ${22-finishers} driver(s) did not complete the event.`);process.exitCode=1;}
+if(finishers!==22||qualified!==22){console.error(`AGP Super Licence smoke race failed: ${22-finishers} non-finisher(s), ${22-qualified} unlicensed phenotype(s).`);process.exitCode=1;}
