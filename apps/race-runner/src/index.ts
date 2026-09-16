@@ -40,4 +40,7 @@ for(const c of [...sim.state.cars].sort((a,b)=>a.position-b.position))events.pus
 for(const incident of sim.state.incidents)events.push(incident);
 const replay:ReplayFile={format:'AGPR/1',createdAt:new Date().toISOString(),classification:'NON-BENCHMARK',reason:'AGP compact neural simulation interface. Full BANC v888 runtime is not active.',versions:VERSION,seed:sim.state.seed,laps:sim.laps,frames,events};
 for(const output of [resolve(root,'data/races/latest.agpr.json'),resolve(root,'apps/web/public/replays/demo.agpr.json')]){await mkdir(dirname(output),{recursive:true});await writeFile(output,JSON.stringify(replay));console.log(`Replay: ${output}`);}
-console.log(`Race complete: ${sim.state.time.toFixed(2)}s · ${frames.length} frames · ${sim.state.cars.filter(c=>c.status==='FINISHED').length}/22 finishers`);
+const finishers=sim.state.cars.filter(c=>c.status==='FINISHED').length;
+console.log(`Race complete: ${sim.state.time.toFixed(2)}s · ${frames.length} frames · ${finishers}/22 finishers`);
+console.log('Final driver state:',JSON.stringify([...sim.state.cars].sort((a,b)=>a.position-b.position).map(c=>({id:c.id,position:c.position,lap:c.lap,progress:+c.progress.toFixed(3),speed:+c.speed.toFixed(1),damage:+c.damage.toFixed(3),surface:c.surface,steer:+c.controls.steering.toFixed(2),throttle:+c.controls.throttle.toFixed(2),brake:+c.controls.brake.toFixed(2)}))));
+if(finishers!==22){console.error(`AGP Super Licence smoke race failed: ${22-finishers} driver(s) did not complete the event.`);process.exitCode=1;}
