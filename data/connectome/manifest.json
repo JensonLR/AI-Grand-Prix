@@ -1,0 +1,28 @@
+{
+  "schema": "AGP-CONNECTOME-MANIFEST/1",
+  "currentRuntimeSource": "AGP_SIMULATION_INTERFACE",
+  "currentRuntime": {
+    "name": "AGP compact LIF-inspired aggregate",
+    "stateCount": 48,
+    "biologicalClaim": "simulation assumption",
+    "causalMotorControl": true,
+    "decoderReceivesTrackCoordinates": false
+  },
+  "targetDataset": {
+    "name": "BANC",
+    "version": "v888",
+    "organism": "Drosophila melanogaster",
+    "sample": "adult female",
+    "scope": "brain and nerve cord",
+    "neurons": 158262,
+    "thresholdedConnections": 3037361,
+    "codex": "https://codex.flywire.ai/?dataset=banc",
+    "publication": "https://doi.org/10.1038/s41586-026-10735-w",
+    "staticArchive": "https://doi.org/10.7910/DVN/7WTH1N",
+    "bundled": false
+  },
+  "notes": [
+    "The public browser build must not claim BANC runtime integration until the import and simulation pipeline is version-locked and validated.",
+    "Driver phenotypes are bounded deterministic variations around one shared runtime architecture, not 22 independently reconstructed biological brains."
+  ]
+}
