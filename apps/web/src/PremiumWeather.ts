@@ -10,11 +10,11 @@ export class PremiumWeather {
     const count=lowPower?320:900;this.positions=new Float32Array(count*3);
     for(let i=0;i<count;i++){this.positions[i*3]=(Math.random()-.5)*180;this.positions[i*3+1]=Math.random()*75;this.positions[i*3+2]=(Math.random()-.5)*180;}
     const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(this.positions,3));
-    this.material=new THREE.PointsMaterial({color:'#d8eaff',size:lowPower?.08:.115,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true});
+    this.material=new THREE.PointsMaterial({color:'#d8eaff',size:lowPower ? .08 : .115,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true});
     this.rain=new THREE.Points(geo,this.material);this.rain.frustumCulled=false;this.rain.visible=false;scene.add(this.rain);
   }
   setWeather(weather:Weather){
-    this.intensity=weather==='HEAVY_RAIN'?1:weather==='RAIN'?.72:weather==='LIGHT_RAIN'?.44:weather==='DRYING'?.18:0;
+    this.intensity=weather==='HEAVY_RAIN'?1:weather==='RAIN' ? .72 : weather==='LIGHT_RAIN' ? .44 : weather==='DRYING' ? .18 : 0;
     this.rain.visible=this.intensity>0;this.material.opacity=.2+this.intensity*.58;
   }
   update(_time:number,camera:THREE.Camera){
