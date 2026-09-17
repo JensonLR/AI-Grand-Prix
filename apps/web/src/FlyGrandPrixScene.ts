@@ -5,7 +5,7 @@ import { DeterministicDriver } from '@agp/driver-sdk';
 import type { Control,RaceConfig,RaceState,ReplayFile,Weather } from '@agp/shared';
 import { GrandPrixScene,type CameraMode,type Entrant as LegacyEntrant } from './GrandPrixScene';
 import { ENTRANTS as CWC_DRIVERS,TEAMS,teamFor } from './championship';
-import { PersistentDriver } from './PersistentDriver';
+import { FullBancDriver } from './FullBancDriver';
 import { constructorDevelopment } from './constructorDevelopment';
 
 export type { CameraMode };
@@ -61,18 +61,20 @@ const tuningFor=(id:string,neutral:boolean,round=1)=>{
   if(!driver)return undefined;const team=teamFor(driver);return constructorDevelopment(team,round).tuning;
 };
 const isPersistentChampionshipSession=(config:RaceConfig)=>config.championshipRound!=null&&['PRACTICE','QUALIFYING','SPRINT_QUALIFYING','SPRINT','GRAND_PRIX'].includes(config.session);
+const retireDrivers=(drivers:Map<string,DeterministicDriver>)=>{for(const driver of drivers.values()){if(driver instanceof FullBancDriver)driver.persist();void driver.shutdown();}};
 
 /**
  * Championship adapter around the premium 2027 visual scene.
- * Quick Race, neutral tests, benchmarks and human tests are strict sandboxes: they may
- * use the same brains and cars, but cannot write persistent driver-development state.
+ * Every non-human browser car is controlled by the full BANC v888/v2 sparse graph runtime.
+ * Quick Race, neutral tests, benchmarks and human tests are strict sandboxes: they use the
+ * same full graph but cannot write persistent development state.
  */
 export class FlyGrandPrixScene extends GrandPrixScene {
   private lastConfig:RaceConfig|null=null;
 
   override startRace(config:RaceConfig){
     const s=internal(this),trackId=config.trackId??DEFAULT_2027_TRACK_ID;
-    for(const driver of s.drivers.values())if(driver instanceof PersistentDriver)driver.persist();
+    retireDrivers(s.drivers);
     this.lastConfig={...config,gridOrder:config.gridOrder?[...config.gridOrder]:undefined};
     this.setTrack(trackId);
     s.clearCars();
@@ -97,8 +99,8 @@ export class FlyGrandPrixScene extends GrandPrixScene {
     for(const e of selected){
       s.entrants.set(e.id,e);
       if(e.id!=='human'){
-        s.drivers.set(e.id,new PersistentDriver(e.id,e.name,persistDevelopment));
-        s.controls.set(e.id,{steering:0,throttle:.82,brake:0,energyDeploy:0});
+        s.drivers.set(e.id,new FullBancDriver(e.id,e.name,persistDevelopment));
+        s.controls.set(e.id,{steering:0,throttle:.72,brake:0,energyDeploy:0});
       }
       const mesh=s.makeCar(e);s.cars.set(e.id,mesh);s.scene.add(mesh);
     }
@@ -113,8 +115,7 @@ export class FlyGrandPrixScene extends GrandPrixScene {
 
   override async loadReplay(replay:ReplayFile){
     const s=internal(this),trackId=replay.trackId??DEFAULT_2027_TRACK_ID;
-    for(const driver of s.drivers.values())if(driver instanceof PersistentDriver)driver.persist();
-    this.lastConfig=null;
+    retireDrivers(s.drivers);this.lastConfig=null;
     this.setTrack(trackId);
     s.clearCars();s.sceneMode='replay';s.replay=replay;s.replayTime=0;s.replayDuration=replay.frames.at(-1)?.t??0;s.paused=false;s.weather='CLEAR';s.applyWeather();
     const first=replay.frames[0];if(!first)throw new Error('Replay has no frames');
