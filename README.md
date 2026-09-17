@@ -5,54 +5,84 @@
 **22 BRAINS. 11 MACHINES. ONE GRID.**  
 **BIOLOGY AT 300 KM/H.**
 
-AI Grand Prix is an original browser-based motorsport championship in which persistent digital fruit-fly driver phenotypes control Formula-style race cars through a causal neural-control pipeline.
+AI Grand Prix is a browser-based fictional motorsport championship in which 22 persistent digital fruit-fly driver phenotypes race for 11 original constructors. Race outcomes come from the authoritative simulation and neural control path rather than scripted winners, hidden pace ratings or external benchmark scores.
 
-The project is deliberately two things at once: a competitive racing simulation and a technically honest connectome experiment. Race results come from the simulation. No external leaderboard, hidden pace number or scripted winner determines the order.
+## Release status
 
-## Current build
+The `connectome-world-championship` branch is a completed and validated 2027 championship build. The release pipeline refuses to publish unless the complete BANC runtime assets, race product contract, automated tests, 24-circuit drivability gate, 22-driver licence gate, production build and real Chromium browser smoke all pass.
 
-The branch implements:
+Implemented product:
 
-- 22 persistent seeded digital driver phenotypes
-- 11 original constructors, two drivers each
-- Drivers' and Constructors' World Championships
-- controlled AGP Neutral Driver Test
-- 120 Hz authoritative fixed-step race simulation
-- bounded constructor engineering differences
-- tyre temperature, wear and wet-weather behaviour
-- energy deployment and regeneration
-- component damage and contact
-- original Azure Coast circuit
-- Three.js 22-car spectator scene
-- broadcast timing tower, interactive track map and six camera modes
-- live neural telemetry
-- Connectome Lab
-- driver and constructor profiles
-- human test-driver mode
-- deterministic headless race/replay generation
-- local/offline-first operation
+- 22 persistent fly-driver phenotypes and 11 constructors, two drivers each
+- Drivers' and Constructors' championships
+- 24-round 2027 season from Bahrain to Abu Dhabi
+- all 24 circuits selectable in Quick Race
+- Quick Race isolated from championship standings and persistent development
+- FP1 / FP2 / FP3, Q1 / Q2 / Q3 and Grand Prix weekend progression
+- Sprint Qualifying / Sprint flow on designated Sprint rounds
+- measured qualifying grids rather than scripted starting order
+- deterministic 120 Hz authoritative vehicle simulation
+- tyres, wear, temperature, wet-weather grip, lock-ups and punctures
+- energy, fuel, component damage and collisions
+- pit entry, limiter, timed service, compound changes and pit exit
+- yellow, VSC, Safety Car pace control, red-flag stoppage and controlled rolling restart logic
+- weather-aware strategy and premium rain/spray presentation
+- 22-car Three.js spectator scene with multiple cameras, timing and live circuit map
+- deterministic AUTO TV direction for incidents, pit stops, close battles, final-lap action and race finish
+- animated pit-stop broadcast graphics with BOX / SERVICE / RELEASE phases and timing
+- track-anchored 3D pit lane with animated team-coloured crew rigs, wheels and jacks
+- full post-race podium ceremony with trophy, top-three presentation and confetti
+- eleven distinct spoof-constructor livery/signature treatments on the AGP-27 car package
+- persistent championship standings, driver pages, constructor pages and Connectome Lab
+- deterministic race/replay generation and replay playback without neural resimulation
+- desktop and mobile layouts, touch Human Test controls and installable web-app metadata
+- low-power mobile rendering path, React/Three/vendor production code splitting and hosted runtime caching
+- production browser build published only after a Chromium render smoke test
 
-## Scientific integrity
+## Full BANC v888 runtime
 
-The live browser neural controller is currently labelled **AGP SIMULATION INTERFACE**.
+The browser product loads a version-locked sparse graph derived from the public **BANC v888 / v2** neuron-pair connectivity.
 
-It is a compact LIF-inspired aggregate neural system that already enforces the intended causal architecture:
+Pinned graph identity:
+
+- mapped BANC metadata rows: **188,508**
+- directed v2 neuron pairs: **11,752,828**
+- sparse runtime payload: **75,418,182 bytes**
+- materialization: **888**
+- graph schema: `BANC-V888-FULL-GRAPH/1`
+
+The graph is stored as CSR-style browser assets under `apps/web/public/connectome/banc-v888-full/` and loaded in a Web Worker. The release gate checks the manifest identity, array lengths, terminal CSR offset and production-build copy before a race can use the neural runtime.
+
+The racing control path is:
 
 ```text
-RACING WORLD
-  -> AGP SENSORY ENCODER
-  -> NEURAL STATE
-  -> CONSTRAINED MOTOR READOUT
-  -> STEERING / THROTTLE / BRAKE
-  -> AUTHORITATIVE CAR PHYSICS
-  -> NEW WORLD STATE
+RACE WORLD
+  -> AGP sensory transduction
+  -> annotated BANC sensory / visual populations
+  -> sparse BANC v888/v2 graph propagation
+  -> annotated descending / motor populations
+  -> constrained AGP motor decoder
+  -> steering / throttle / brake / energy deployment
+  -> authoritative vehicle physics
+  -> new race world state
 ```
 
-The motor decoder receives neural activity. It is not allowed to read absolute circuit coordinates, an ideal racing line, target steering, target speed or an optimal braking point.
+Every championship driver uses the same biological graph topology, while a permanent seed and bounded calibration/development create a persistent digital phenotype. Each live driver has independent neural state.
 
-The project does **not** claim that the full biological connectome is already running in-browser. The full-connectome integration target is **BANC v888**, the adult female *Drosophila melanogaster* brain-and-nerve-cord dataset. See [`docs/connectome-integration.md`](docs/connectome-integration.md) and [`data/connectome/manifest.json`](data/connectome/manifest.json).
+### Scientific boundary
 
-All 22 championship drivers share one fundamental runtime architecture. Individual differences come from permanent, tightly bounded phenotype seeds rather than hand-written RPG skill ratings.
+The **BANC anatomy/connectivity is source data**. The following remain AI Grand Prix modelling assumptions rather than claims about living-fly physiology:
+
+- how racing observations are transduced into neural stimulation
+- the LIF-like activity dynamics, leak, threshold and homeostasis
+- sparse active-frontier execution used to keep browser compute bounded
+- phenotype perturbations and calibration
+- how descending/motor population activity is decoded into racing controls
+- reinforcement/development rules
+
+The project therefore claims **full BANC v888/v2 neuron-pair topology in the runtime**, not a biophysically complete simulation of a living fruit fly.
+
+See `docs/connectome-integration.md` and the generated runtime manifest at `apps/web/public/connectome/banc-v888-full/manifest.json`.
 
 ## Championship grid
 
@@ -70,24 +100,42 @@ All 22 championship drivers share one fundamental runtime architecture. Individu
 | FLYPINE | Pierre Gnatsly | Franco Larvapinto |
 | CADDIS-LAC RACING | Valtteri Botfly | Sergio Flyrez |
 
-The parody exists in naming. Constructor visual identity, engineering configuration and colour treatment are original rather than copies of real Formula 1 identities.
+The parody is in the names. Constructor marks, palettes, liveries and engineering identities are original rather than copies of Formula 1 branding or sponsor layouts.
 
-## Constructor engineering
+## 2027 season
 
-Every constructor works inside the same regulation envelope. Car and neural-interface differences are bounded trade-offs rather than arbitrary horsepower or driver-skill bonuses.
+The championship uses the published 2027 Formula 1 venue order as factual schedule metadata while retaining original AI Grand Prix branding. Circuit centrelines are versioned from the MIT-licensed `bacinger/f1-circuits` dataset by `scripts/sync-2027-circuits.mjs`.
 
-The current physical tuning dimensions are:
+1. Bahrain — Sakhir
+2. Saudi Arabia — Jeddah
+3. Australia — Melbourne
+4. Japan — Suzuka
+5. China — Shanghai
+6. Miami
+7. Canada — Montréal
+8. Monaco
+9. Portugal — Portimão
+10. Great Britain — Silverstone
+11. Austria — Spielberg
+12. Belgium — Spa-Francorchamps
+13. Hungary — Budapest
+14. Italy — Monza
+15. Spain — Madrid
+16. Azerbaijan — Baku
+17. Türkiye — Istanbul
+18. Singapore
+19. United States — Austin
+20. Mexico City
+21. São Paulo
+22. Las Vegas
+23. Qatar — Lusail
+24. Abu Dhabi — Yas Marina
 
-- aero efficiency
-- downforce
-- mechanical grip
-- energy system
-- braking
-- tyre management
-- reliability
-- control response
+## Driver fairness
 
-Static values are clamped around the neutral AGP-01 so machinery can matter without overwhelming driver variation.
+There are no hand-written driver pace, cornering, rain or aggression ratings. Drivers share the same fundamental connectome graph and receive bounded seeded variation plus the same control contract. Championship development can persist for championship sessions; Quick Race, Human Test and neutral validation are strict sandboxes and cannot write persistent driver development.
+
+The neutral Super Licence gate measures minimum competence rather than selecting the 22 fastest candidates. Current release validation certifies all **22 / 22** championship phenotypes, and the 24-circuit neural smoke passes **24 / 24** layouts.
 
 ## Run locally
 
@@ -98,59 +146,62 @@ npm ci
 npm run dev
 ```
 
-Useful verification commands:
+Verification:
 
 ```bash
 npm run lint
 npm run typecheck
 npm test
-npm run build
+npm run season-smoke
 npm run race
+npm run season-replay
+npm run build
 ```
 
-`npm run race` runs the same championship machinery headlessly and writes a deterministic replay to:
-
-- `data/races/latest.agpr.json`
-- `apps/web/public/replays/demo.agpr.json`
-
-No account, commercial API or paid cloud service is required for the default build.
+No paid API or commercial model provider is required for the default championship.
 
 ## Repository architecture
 
 ```text
 packages/shared
-  versioned championship/race contracts
+  championship, race, replay and track contracts
 
 packages/sim-core
-  Azure Coast + 120 Hz car/race physics
+  2027 circuit geometry, 120 Hz vehicle physics and championship sporting layer
 
 packages/driver-sdk
-  sensory encoding + seeded phenotype + neural runtime + constrained decoder
+  racing observation contract and deterministic fallback/validation driver code
 
 apps/race-runner
-  authoritative local/headless race + replay generation
+  neural circuit smoke, neutral Super Licence certification and replay generation
 
 apps/web
-  React championship UI + Three.js spectator/broadcast renderer
+  React product shell, Three.js race presentation, BANC runtime/worker and championship UI
+
+apps/web/public/connectome/banc-v888-full
+  version-locked sparse BANC v888/v2 browser graph
 ```
 
-The rendering thread is not intended to become the eventual full BANC compute engine. Full connectome execution should move into worker/WASM/native local compute and communicate constrained state to the authoritative race simulation.
+## Release gates
 
-## Neutral Driver Test
+A publishable branch run must pass all of the following:
 
-The Neutral Driver Test places every phenotype in the same neutral AGP-01N machinery and conditions. It exists to separate observed driver performance from constructor performance. Neutral-test outputs are analytical and do not secretly alter championship race pace.
+1. version/sync the 24 circuit geometries
+2. apply and verify the championship product contracts
+3. verify the complete BANC v888 browser graph
+4. lint
+5. TypeScript build/typecheck
+6. automated tests
+7. 24 / 24 neural circuit drivability smoke
+8. 22 / 22 neutral Super Licence certification
+9. generate the public Bahrain replay
+10. production Vite build
+11. verify the BANC graph survived the production copy
+12. launch the production bundle in Chromium and prove the cars and full BANC runtime render
+13. publish `browser-preview`
 
-## Development principles
+## Product boundary
 
-- no hidden autonomous racing AI behind a connectome visualiser
-- no fake sentience claims
-- no arbitrary driver pace/cornering/rain ratings
-- no scripted winner
-- no paid-compute requirement for the default experience
-- no fabricated neural measurements
-- no claim of full BANC integration until the import/runtime pipeline is actually validated
-- replay once, watch without connectome resimulation
+The agreed 2027 browser-release checklist is closed. The full-BANC runtime, racing architecture, championship flow, final broadcast/pit-lane/podium presentation, constructor visual differentiation and mobile/browser optimisation pass are all part of the completed product.
 
-## Status
-
-This is an active build. The compact neural-control path, 22-driver grid, constructor system, championship UI and race simulation are implemented. Full BANC v888 import/runtime integration, deeper academy training, complete pit/race-control systems, richer replay tooling, original constructor symbol assets, final car/environment art and broadcast polish remain development work rather than being falsely marked complete.
+Further physics-engine replacement, replay compression, additional authored audio or extra art variants are optional future expansion rather than unfinished requirements for this validated browser release.

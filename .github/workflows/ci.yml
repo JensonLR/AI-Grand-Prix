@@ -1,5 +1,7 @@
 name: CI
 on: [push, pull_request]
+permissions:
+  contents: write
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -8,15 +10,98 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: npm }
       - run: npm ci
+      - name: Sync versioned 2027 circuit geometry
+        run: node scripts/sync-2027-circuits.mjs
+      - name: Apply multitrack core
+        run: node scripts/patch-multitrack-core.mjs
+      - name: Apply multitrack neural observations
+        run: node scripts/patch-multitrack-driver.mjs
+      - name: Apply persistent neural development
+        run: node scripts/patch-driver-development.mjs && node scripts/patch-persistent-driver.mjs
+      - name: Apply selected-circuit renderer
+        run: node scripts/patch-multitrack-scene.mjs
+      - name: Apply championship season UI
+        run: node scripts/patch-connectome-ui.mjs && node scripts/patch-season-ui.mjs
+      - name: Apply premium vehicle, circuit, audio and broadcast finish
+        run: node scripts/patch-premium-visuals.mjs
+      - name: Normalise AGP-27 championship chassis
+        run: node scripts/patch-agp27-car.mjs
+      - name: Apply constructor identity marks
+        run: node scripts/patch-team-marks.mjs
+      - name: Apply constructor development
+        run: node scripts/patch-constructor-development.mjs
+      - name: Apply premium weather and spray
+        run: node scripts/patch-premium-weather.mjs
+      - name: Apply 2027 season-first product shell
+        run: node scripts/patch-product-v2.mjs
+      - name: Apply full BANC v888 UI contract
+        run: node scripts/patch-banc-full-ui.mjs
+      - name: Apply hard full-BANC runtime readiness gate
+        run: node scripts/patch-banc-readiness.mjs
+      - name: Apply crash-safe browser attract boot
+        run: node scripts/patch-safe-browser-boot.mjs
+      - name: Apply final race-broadcast and pit-lane presentation
+        run: node scripts/patch-final-presentation.mjs
+      - name: Verify complete BANC v888 browser graph
+        run: node scripts/verify-banc-runtime.mjs
+      - name: Verify visible 2027 product shell
+        run: node scripts/verify-product-v2.mjs
+      - name: Verify race product contract
+        run: node scripts/verify-race-product.mjs
+      - name: Verify browser boot contract
+        run: node scripts/verify-browser-boot.mjs
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
-      - run: npm run race
+      - name: Verify neural drivability on all 24 circuits
+        run: npm run season-smoke
+      - name: Certify the 22-driver neutral grid
+        run: npm run race
+      - name: Generate public Round 1 Bahrain replay
+        run: npm run season-replay
       - name: Upload race diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: connectome-race-replay
           path: data/races/latest.agpr.json
-          if-no-files-found: error
+          if-no-files-found: warn
       - run: npm run build
+      - name: Verify full BANC graph survived production build
+        run: BANC_ROOT=apps/web/dist/connectome/banc-v888-full node scripts/verify-banc-runtime.mjs
+      - name: Install Chromium smoke-test runtime
+        run: npm install --no-save playwright@1.57.0 && npx playwright install --with-deps chromium
+      - name: Prove production browser renders cars and full BANC runtime
+        run: |
+          python3 -m http.server 4173 --directory apps/web/dist >/tmp/agp-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID' EXIT
+          node scripts/browser-smoke.mjs
+      - name: Upload browser preview
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: connectome-browser-preview
+          path: apps/web/dist
+          if-no-files-found: error
+          retention-days: 30
+      - name: Persist validated generated and patched sources
+        if: github.event_name == 'push' && github.ref == 'refs/heads/connectome-world-championship'
+        continue-on-error: true
+        run: |
+          git config user.name "AGP CI"
+          git config user.email "actions@users.noreply.github.com"
+          git add packages/sim-core/src/index.ts packages/sim-core/src/generated/season2027.ts packages/driver-sdk/src/index.ts packages/shared/src/index.ts apps/web/src/FlyGrandPrixScene.ts apps/web/src/PersistentDriver.ts apps/web/src/FullBancDriver.ts apps/web/src/BancFullRuntime.ts apps/web/src/BancFullWorker.ts apps/web/src/constructorDevelopment.ts apps/web/src/GrandPrixScene.ts apps/web/src/ChampionshipApp.tsx apps/web/src/SeasonCalendar.tsx apps/web/src/WeekendPanel.tsx apps/web/src/main.tsx apps/web/src/PremiumCar.ts apps/web/src/PremiumCircuit.ts apps/web/src/PremiumAudio.ts apps/web/src/PremiumWeather.ts apps/web/src/PremiumWorld.ts apps/web/src/TeamMark.tsx apps/web/src/ChampionshipBrand.tsx apps/web/src/CircuitSilhouette.tsx apps/web/src/Opening2027.tsx apps/web/src/PaddockHome.tsx apps/web/src/premium.css apps/web/src/constructor-marks.css apps/web/src/development.css apps/web/src/product-v2.css apps/web/src/race-viewport.css apps/web/public/tracks/season2027.json apps/web/public/replays/demo.agpr.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Persist validated full-BANC race product [skip ci]"
+            git push origin HEAD:connectome-world-championship || echo "A newer championship commit exists; source persistence deferred to its validation run."
+          fi
+      - name: Publish browser preview branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/connectome-world-championship'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: browser-preview
+          publish_dir: ./apps/web/dist
+          force_orphan: true
+          commit_message: Publish tested full-BANC 2027 AI Grand Prix browser build

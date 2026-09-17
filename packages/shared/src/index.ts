@@ -1,8 +1,8 @@
 export const VERSION = {
-  sim: '0.2.0',
-  car: 'AGP-01/0.2',
-  track: 'AZURE-COAST/0.2',
-  protocol: 'AGP-CONNECTOME/1',
+  sim: '0.4.0',
+  car: 'AGP-27/1.0',
+  track: 'AGP-2027-MULTITRACK/1',
+  protocol: 'AGP-BANC-V888/1',
   prompt: 'AGP-CWC/1'
 } as const;
 
@@ -12,6 +12,8 @@ export type Weather = 'CLEAR' | 'CLOUDY' | 'LIGHT_RAIN' | 'HEAVY_RAIN' | 'DRYING
 export type SessionType =
   | 'QUICK_RACE'
   | 'PRACTICE'
+  | 'SPRINT_QUALIFYING'
+  | 'SPRINT'
   | 'QUALIFYING'
   | 'GRAND_PRIX'
   | 'NEUTRAL_TEST'
@@ -19,7 +21,7 @@ export type SessionType =
   | 'BENCHMARK'
   | 'HUMAN_TEST';
 export type TyreCompound = 'SOFT' | 'MEDIUM' | 'HARD' | 'INTERMEDIATE' | 'WET';
-export type ConnectomeSource = 'AGP_SIMULATION_INTERFACE' | 'BANC_V888_IMPORT';
+export type ConnectomeSource = 'AGP_SIMULATION_INTERFACE' | 'BANC_V888_IMPORT' | 'BANC_V888_FULL_GRAPH';
 
 export interface RaceConfig {
   session: SessionType;
@@ -27,7 +29,10 @@ export interface RaceConfig {
   entrants: number;
   weather: Weather;
   seed: number;
+  trackId?: string;
+  championshipRound?: number;
   humanCarId?: string;
+  gridOrder?: string[];
 }
 
 export interface Control {
@@ -50,6 +55,9 @@ export interface NeuralTelemetry {
   phenotypeId: string;
   source: ConnectomeSource;
   activeNeurons: number;
+  totalNeurons?: number;
+  graphEdges?: number;
+  materialization?: number;
   spikeRate: number;
   visualActivity: number;
   descendingActivity: number;
@@ -131,6 +139,8 @@ export interface RaceState {
   weather: Weather;
   wetness: number;
   incidents: RaceIncident[];
+  trackId?: string;
+  championshipRound?: number;
 }
 
 export interface ReplayCarFrame {
@@ -144,7 +154,7 @@ export interface ReplayCarFrame {
   status: CarState['status'];
   damage?: number;
   compound?: TyreCompound;
-  neural?: Pick<NeuralTelemetry, 'activeNeurons' | 'spikeRate' | 'visualActivity' | 'descendingActivity' | 'steeringOutput' | 'throttleOutput' | 'brakeOutput'>;
+  neural?: Pick<NeuralTelemetry, 'activeNeurons' | 'totalNeurons' | 'graphEdges' | 'materialization' | 'spikeRate' | 'visualActivity' | 'descendingActivity' | 'steeringOutput' | 'throttleOutput' | 'brakeOutput'>;
 }
 
 export interface ReplayFrame {
@@ -160,6 +170,8 @@ export interface ReplayFile {
   versions: typeof VERSION;
   seed: number;
   laps: number;
+  trackId?: string;
+  championshipRound?: number;
   frames: ReplayFrame[];
   events: unknown[];
 }

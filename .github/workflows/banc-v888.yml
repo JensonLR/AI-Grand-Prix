@@ -1,0 +1,60 @@
+name: BANC v888 full graph
+on:
+  push:
+    branches: [connectome-world-championship]
+    paths:
+      - scripts/build_banc_full_graph.py
+      - scripts/banc-requirements.txt
+      - .github/workflows/banc-v888.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build-full-graph:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: scripts/banc-requirements.txt
+      - name: Install BANC build dependencies
+        run: pip install -r scripts/banc-requirements.txt
+      - name: Build complete BANC v888 browser graph
+        run: python scripts/build_banc_full_graph.py
+      - name: Verify full graph contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('apps/web/public/connectome/banc-v888-full/manifest.json')
+          d=json.loads(p.read_text())
+          assert d['schema']=='BANC-V888-FULL-GRAPH/1'
+          assert d['materialization']==888
+          assert d['neurons']==188508
+          assert d['directedNeuronPairs']==11752828
+          assert d['allPinnedMetadataRowsPreserved'] is True
+          assert d['allV2NeuronPairsPreserved'] is True
+          for name,meta in d['files'].items():
+              f=p.parent/name
+              assert f.exists(), name
+              assert f.stat().st_size==meta['bytes'], (name,f.stat().st_size,meta['bytes'])
+          print({k:d[k] for k in ['schema','neurons','directedNeuronPairs','runtimeBytes']})
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: banc-v888-full-browser-graph
+          path: apps/web/public/connectome/banc-v888-full
+          retention-days: 90
+          compression-level: 6
+      - name: Persist full v888 graph on championship branch
+        run: |
+          git config user.name "AGP BANC Builder"
+          git config user.email "actions@users.noreply.github.com"
+          git add -f apps/web/public/connectome/banc-v888-full data/connectome/banc-v888-full
+          if ! git diff --cached --quiet; then
+            git commit -m "Persist full BANC v888 browser graph"
+            git push origin HEAD:connectome-world-championship
+          fi
