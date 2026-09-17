@@ -19,6 +19,7 @@ import './mobile-restoration.css';
 import './experience-v4.css';
 import './experience-v4-ux.css';
 import './mobile-race-v5.css';
+import './mobile-championship-v6.css';
 
 createRoot(document.getElementById('root')!).render(<StrictMode><ChampionshipApp/></StrictMode>);
 
