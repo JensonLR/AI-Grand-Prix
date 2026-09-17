@@ -1,4 +1,4 @@
-/* global document, HTMLCanvasElement, innerWidth, innerHeight, getComputedStyle, Event, MouseEvent */
+/* global document, HTMLCanvasElement, HTMLElement, innerWidth, innerHeight, getComputedStyle, Event, MouseEvent, window */
 import {chromium} from 'playwright';
 const browser=await chromium.launch({headless:true});
 function collectErrors(page){const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(`console: ${m.text()}`);});return errors;}
