@@ -34,8 +34,6 @@ jobs:
         run: node scripts/patch-premium-weather.mjs
       - name: Apply 2027 season-first product shell
         run: node scripts/patch-product-v2.mjs
-      - name: Apply full race-weekend and Quick Race sandbox
-        run: node scripts/patch-weekend-v3.mjs
       - name: Apply full BANC v888 UI contract
         run: node scripts/patch-banc-full-ui.mjs
       - name: Apply hard full-BANC runtime readiness gate
