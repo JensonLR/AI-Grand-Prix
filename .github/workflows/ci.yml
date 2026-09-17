@@ -67,6 +67,14 @@ jobs:
       - run: npm run build
       - name: Verify full BANC graph survived production build
         run: BANC_ROOT=apps/web/dist/connectome/banc-v888-full node scripts/verify-banc-runtime.mjs
+      - name: Install Chromium smoke-test runtime
+        run: npm install --no-save playwright@1.57.0 && npx playwright install --with-deps chromium
+      - name: Prove production browser renders cars and full BANC runtime
+        run: |
+          python3 -m http.server 4173 --directory apps/web/dist >/tmp/agp-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID' EXIT
+          node scripts/browser-smoke.mjs
       - name: Upload browser preview
         if: success()
         uses: actions/upload-artifact@v4
