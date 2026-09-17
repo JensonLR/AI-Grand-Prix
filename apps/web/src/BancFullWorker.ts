@@ -16,7 +16,7 @@ const drivers=new Map<string,DriverState>();
 const MAX_FRONTIER=4200;
 const PROPAGATION_STEPS=3;
 const BANC_NEURONS=188508;
-const BANC_EDGES=11510975;
+const BANC_EDGES=11752828;
 
 const clamp=(v:number,a=0,b=1)=>Math.max(a,Math.min(b,v));
 
