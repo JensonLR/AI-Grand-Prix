@@ -1,11 +1,12 @@
 import type { CSSProperties } from 'react';
-import type { SessionType,TrackDefinition } from '@agp/shared';
+import type { SessionType } from '@agp/shared';
+import type { TrackDefinition } from '@agp/sim-core';
 import { ChampionshipMark } from './ChampionshipBrand';
 import { CircuitSilhouette } from './CircuitSilhouette';
 import { TeamMark } from './TeamMark';
 import { ENTRANTS,TEAMS } from './championship';
 
-export function PaddockHome({track,onMode,onWeekend,onReplay,onDrivers,onGarage,onCalendar,onChampionship,onConnectome,error}:{track:any;onMode:(s:SessionType,trackId?:string)=>void;onWeekend:()=>void;onReplay:()=>void;onDrivers:()=>void;onGarage:()=>void;onCalendar:()=>void;onChampionship:()=>void;onConnectome:()=>void;error:string}){
+export function PaddockHome({track,onMode,onWeekend,onReplay,onDrivers,onGarage,onCalendar,onChampionship,onConnectome,error}:{track:TrackDefinition;onMode:(s:SessionType,trackId?:string)=>void;onWeekend:()=>void;onReplay:()=>void;onDrivers:()=>void;onGarage:()=>void;onCalendar:()=>void;onChampionship:()=>void;onConnectome:()=>void;error:string}){
   return <section className="paddock-v2">
     <header className="paddock-top"><ChampionshipMark/><div className="paddock-live"><i/><span>LOCAL NEURAL GRID</span><b>22 / 22 READY</b></div></header>
     <div className="paddock-grid">
