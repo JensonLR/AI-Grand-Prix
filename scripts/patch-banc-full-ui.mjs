@@ -8,6 +8,7 @@ swap("import { readDriverDevelopment } from './PersistentDriver';","import { rea
 src=src.replaceAll('readDriverDevelopment(', 'readFullBancDevelopment(');
 src=src.replace('Shared 48-state LIF-inspired control topology; persistent bounded variation in firing threshold, leak, synaptic gain, sensory noise, conduction delay, adaptation, plasticity and decoder calibration. Identity is seeded from the driver ID and remains stable across sessions.','Every driver uses the complete BANC v888/v2 neuron-pair topology. The official wiring is shared; each driver maintains independent neural state plus a stable seeded interface phenotype and bounded championship calibration.');
 src=src.replace('Frozen: phenotype seed, topology and physiology. Persistent: bounded sensory/readout calibration and race exposure. Reset each event: membrane potentials, spikes and homeostatic activity.','Frozen: official BANC v888 graph topology and driver seed. Persistent only in championship sessions: bounded interface calibration and exposure. Reset every event: membrane potentials and transient graph activity.');
+src=src.replace('edges=n?.graphEdges??11510975','edges=n?.graphEdges??11752828');
 
 if(!src.includes('kicker="FULL BANC V888 RUNTIME"')){
   const lab=/function ConnectomeLab\([\s\S]*?\nfunction Metric/;
