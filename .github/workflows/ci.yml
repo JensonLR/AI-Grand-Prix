@@ -40,6 +40,8 @@ jobs:
         run: node scripts/patch-banc-readiness.mjs
       - name: Apply crash-safe browser attract boot
         run: node scripts/patch-safe-browser-boot.mjs
+      - name: Apply final race-broadcast and pit-lane presentation
+        run: node scripts/patch-final-presentation.mjs
       - name: Verify complete BANC v888 browser graph
         run: node scripts/verify-banc-runtime.mjs
       - name: Verify visible 2027 product shell
