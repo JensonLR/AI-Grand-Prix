@@ -2,9 +2,10 @@
 """Materialise the full BANC v888 neuron-pair graph for the AGP browser runtime.
 
 This preserves every metadata row in the pinned BANC paper-repository snapshot and every
-directed pair in the published v2 simple edgelist. The paper metadata includes cells
-annotated after the strict 17-Apr-2026 materialisation but mapped onto v888 identifiers;
-we preserve the snapshot exactly rather than silently trimming it to an older row count.
+directed pair in the official v2 simple edgelist snapshot currently served by the BANC
+public distribution. The paper metadata includes cells annotated after the strict
+17-Apr-2026 materialisation but mapped onto v888 identifiers; we preserve the snapshot
+exactly rather than silently trimming it to an older row count.
 
 BANC supplies anatomy/connectivity, not complete membrane/channel kinetics. AGP therefore
 applies explicitly documented sparse LIF-like dynamics on top of the real v888 topology.
@@ -29,7 +30,10 @@ PAPER_COMMIT = 'e31a2e26b9937dca72e5ca1c1960df6454d76114'
 META_URL = f'https://raw.githubusercontent.com/htem/BANC-project/{PAPER_COMMIT}/data/meta/banc_888_meta_20260521.parquet'
 EDGE_URL = 'https://storage.googleapis.com/lee-lab_brain-and-nerve-cord-fly-connectome/compiled_data/banc_888/banc_888_edgelist_simple_v2.feather'
 META_ROWS = 188_508
-EDGE_ROWS = 11_510_975
+# The public BANC v2 edge artifact currently contains 11,752,828 ordered neuron pairs.
+# This value is intentionally pinned: if the mutable GCS distribution changes again the
+# build must fail loudly until the new snapshot has been inspected and re-pinned.
+EDGE_ROWS = 11_752_828
 
 
 def sha256(path: Path) -> str:
@@ -200,7 +204,7 @@ def main() -> None:
         },
         'sources': {
             'metadata': {'url': META_URL, 'rows': META_ROWS, 'sha256': sha256(meta_path), 'pinnedCommit': PAPER_COMMIT, 'note': 'paper-repository analysis snapshot; includes post-snapshot annotations mapped to v888 identifiers'},
-            'edgelist': {'url': EDGE_URL, 'rows': EDGE_ROWS, 'sha256': sha256(edge_path)},
+            'edgelist': {'url': EDGE_URL, 'rows': EDGE_ROWS, 'sha256': sha256(edge_path), 'note': 'official public GCS v2 artifact snapshot observed and re-pinned 2026-09-17; the GCS distribution is mutable, so row-count drift fails the build'},
             'paper': 'https://doi.org/10.1038/s41586-026-10735-w',
             'dataverse': 'https://doi.org/10.7910/DVN/7WTH1N'
         },
