@@ -32,6 +32,8 @@ jobs:
         run: node scripts/patch-premium-weather.mjs
       - name: Apply 2027 season-first product shell
         run: node scripts/patch-product-v2.mjs
+      - name: Apply full race-weekend and Quick Race sandbox
+        run: node scripts/patch-weekend-v3.mjs
       - name: Verify visible 2027 product shell
         run: node scripts/verify-product-v2.mjs
       - run: npm run lint
@@ -65,9 +67,9 @@ jobs:
         run: |
           git config user.name "AGP CI"
           git config user.email "actions@users.noreply.github.com"
-          git add packages/sim-core/src/index.ts packages/sim-core/src/generated/season2027.ts packages/driver-sdk/src/index.ts apps/web/src/FlyGrandPrixScene.ts apps/web/src/PersistentDriver.ts apps/web/src/constructorDevelopment.ts apps/web/src/GrandPrixScene.ts apps/web/src/ChampionshipApp.tsx apps/web/src/SeasonCalendar.tsx apps/web/src/WeekendPanel.tsx apps/web/src/main.tsx apps/web/src/PremiumCar.ts apps/web/src/PremiumCircuit.ts apps/web/src/PremiumAudio.ts apps/web/src/PremiumWeather.ts apps/web/src/PremiumWorld.ts apps/web/src/TeamMark.tsx apps/web/src/ChampionshipBrand.tsx apps/web/src/CircuitSilhouette.tsx apps/web/src/Opening2027.tsx apps/web/src/PaddockHome.tsx apps/web/src/premium.css apps/web/src/constructor-marks.css apps/web/src/development.css apps/web/src/product-v2.css apps/web/public/tracks/season2027.json apps/web/public/replays/demo.agpr.json
+          git add packages/sim-core/src/index.ts packages/sim-core/src/generated/season2027.ts packages/driver-sdk/src/index.ts apps/web/src/FlyGrandPrixScene.ts apps/web/src/PersistentDriver.ts apps/web/src/constructorDevelopment.ts apps/web/src/GrandPrixScene.ts apps/web/src/ChampionshipApp.tsx apps/web/src/SeasonCalendar.tsx apps/web/src/WeekendPanel.tsx apps/web/src/main.tsx apps/web/src/PremiumCar.ts apps/web/src/PremiumCircuit.ts apps/web/src/PremiumAudio.ts apps/web/src/PremiumWeather.ts apps/web/src/PremiumWorld.ts apps/web/src/TeamMark.tsx apps/web/src/ChampionshipBrand.tsx apps/web/src/CircuitSilhouette.tsx apps/web/src/Opening2027.tsx apps/web/src/PaddockHome.tsx apps/web/src/premium.css apps/web/src/constructor-marks.css apps/web/src/development.css apps/web/src/product-v2.css apps/web/src/race-viewport.css apps/web/public/tracks/season2027.json apps/web/public/replays/demo.agpr.json
           if ! git diff --cached --quiet; then
-            git commit -m "Persist validated 2027 product shell [skip ci]"
+            git commit -m "Persist validated race weekend and viewport [skip ci]"
             git push origin HEAD:connectome-world-championship || echo "A newer championship commit exists; source persistence deferred to its validation run."
           fi
       - name: Publish browser preview branch
@@ -78,4 +80,4 @@ jobs:
           publish_branch: browser-preview
           publish_dir: ./apps/web/dist
           force_orphan: true
-          commit_message: Publish tested 2027 season-first AI Grand Prix browser build
+          commit_message: Publish tested 2027 AI Grand Prix browser build
