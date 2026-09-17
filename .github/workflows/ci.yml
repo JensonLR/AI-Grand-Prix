@@ -24,6 +24,8 @@ jobs:
         run: node scripts/patch-connectome-ui.mjs && node scripts/patch-season-ui.mjs
       - name: Apply premium vehicle, circuit, audio and broadcast finish
         run: node scripts/patch-premium-visuals.mjs
+      - name: Normalise AGP-27 championship chassis
+        run: node scripts/patch-agp27-car.mjs
       - name: Apply constructor identity marks
         run: node scripts/patch-team-marks.mjs
       - name: Apply constructor development
