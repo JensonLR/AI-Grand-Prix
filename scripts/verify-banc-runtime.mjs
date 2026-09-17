@@ -2,18 +2,34 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-const ROOT='apps/web/public/connectome/banc-v888-full';
+const ROOT=process.env.BANC_ROOT||'apps/web/public/connectome/banc-v888-full';
 const manifestPath=path.join(ROOT,'manifest.json');
 const fail=message=>{throw new Error(`Full BANC release gate failed: ${message}`)};
-if(!fs.existsSync(manifestPath))fail('manifest.json is missing; refusing to publish a non-BANC build');
+const N=188508,E=11752828;
+
+// Keep every runtime identity check aligned with the graph that is actually published.
+const runtimeSource=fs.readFileSync('apps/web/src/BancFullRuntime.ts','utf8');
+const workerSource=fs.readFileSync('apps/web/src/BancFullWorker.ts','utf8');
+const sceneSource=fs.readFileSync('apps/web/src/FlyGrandPrixScene.ts','utf8');
+const driverSource=fs.readFileSync('apps/web/src/FullBancDriver.ts','utf8');
+if(!runtimeSource.includes(`BANC_V888_NEURONS=${N}`))fail('BancFullRuntime neuron identity is stale');
+if(!runtimeSource.includes(`BANC_V888_DIRECTED_PAIRS=${E}`))fail('BancFullRuntime edge identity is stale');
+if(!workerSource.includes(`BANC_NEURONS=${N}`))fail('BancFullWorker neuron identity is stale');
+if(!workerSource.includes(`BANC_EDGES=${E}`))fail('BancFullWorker edge identity is stale');
+if(workerSource.includes('BANC_EDGES=11510975')||runtimeSource.includes('BANC_V888_DIRECTED_PAIRS=11510975'))fail('legacy BANC edge-count identity remains in the browser runtime');
+if(!sceneSource.includes('Full BANC v888 graph is not ready; refusing to start a neural race'))fail('scene no-graph/no-race gate is missing');
+if(!driverSource.includes("source:'BANC_V888_FULL_GRAPH'"))fail('full-BANC driver telemetry identity is missing');
+if(!driverSource.includes('await bancRuntime.decide'))fail('driver is not causally awaiting the BANC graph decision');
+
+if(!fs.existsSync(manifestPath))fail(`${manifestPath} is missing; refusing to publish a non-BANC build`);
 const manifest=JSON.parse(fs.readFileSync(manifestPath,'utf8'));
-const N=188508, E=11752828;
 if(manifest.schema!=='BANC-V888-FULL-GRAPH/1')fail(`schema ${manifest.schema}`);
 if(manifest.materialization!==888)fail(`materialization ${manifest.materialization}`);
 if(manifest.neurons!==N)fail(`mapped rows ${manifest.neurons} != ${N}`);
 if(manifest.directedNeuronPairs!==E)fail(`directed pairs ${manifest.directedNeuronPairs} != ${E}`);
 if(manifest.allPinnedMetadataRowsPreserved!==true)fail('metadata completeness flag is not true');
 if(manifest.allV2NeuronPairsPreserved!==true)fail('v2 pair completeness flag is not true');
+if(!manifest.sources?.metadata?.sha256||!manifest.sources?.edgelist?.sha256)fail('source SHA-256 provenance is incomplete');
 
 const exactSizes={
   'offsets.u32':(N+1)*4,
@@ -26,7 +42,7 @@ const exactSizes={
 let runtimeBytes=0;
 for(const [name,meta] of Object.entries(manifest.files??{})){
   const file=path.join(ROOT,name);
-  if(!fs.existsSync(file))fail(`${name} is missing`);
+  if(!fs.existsSync(file))fail(`${name} is missing from ${ROOT}`);
   const stat=fs.statSync(file);
   runtimeBytes+=stat.size;
   if(stat.size!==meta.bytes)fail(`${name} size ${stat.size} != manifest ${meta.bytes}`);
@@ -56,4 +72,4 @@ for(let i=0;i<N;i++){
 }
 if(!sensoryMapped)fail('no annotated sensory/visual neurons are available to receive racing observations');
 if(!motorMapped)fail('no annotated descending/motor neurons are available for the motor readout');
-console.log(`Full BANC release gate passed: v888, ${N.toLocaleString()} mapped rows, ${E.toLocaleString()} directed pairs, ${runtimeBytes.toLocaleString()} runtime bytes, ${sensoryMapped.toLocaleString()} sensory/visual interface neurons, ${motorMapped.toLocaleString()} descending/motor interface neurons.`);
+console.log(`Full BANC release gate passed at ${ROOT}: v888, ${N.toLocaleString()} mapped rows, ${E.toLocaleString()} directed pairs, ${runtimeBytes.toLocaleString()} runtime bytes, ${sensoryMapped.toLocaleString()} sensory/visual interface neurons, ${motorMapped.toLocaleString()} descending/motor interface neurons.`);
