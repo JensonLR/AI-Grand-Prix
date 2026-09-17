@@ -9,7 +9,7 @@ AI Grand Prix is a browser-based fictional motorsport championship in which 22 p
 
 ## Release status
 
-The `connectome-world-championship` branch is a validated 2027 championship build. The release pipeline refuses to publish unless the complete BANC runtime assets, race product contract, automated tests, 24-circuit drivability gate, 22-driver licence gate, production build and real Chromium browser smoke all pass.
+The `connectome-world-championship` branch is a completed and validated 2027 championship build. The release pipeline refuses to publish unless the complete BANC runtime assets, race product contract, automated tests, 24-circuit drivability gate, 22-driver licence gate, production build and real Chromium browser smoke all pass.
 
 Implemented product:
 
@@ -28,14 +28,20 @@ Implemented product:
 - yellow, VSC, Safety Car pace control, red-flag stoppage and controlled rolling restart logic
 - weather-aware strategy and premium rain/spray presentation
 - 22-car Three.js spectator scene with multiple cameras, timing and live circuit map
+- deterministic AUTO TV direction for incidents, pit stops, close battles, final-lap action and race finish
+- animated pit-stop broadcast graphics with BOX / SERVICE / RELEASE phases and timing
+- track-anchored 3D pit lane with animated team-coloured crew rigs, wheels and jacks
+- full post-race podium ceremony with trophy, top-three presentation and confetti
+- eleven distinct spoof-constructor livery/signature treatments on the AGP-27 car package
 - persistent championship standings, driver pages, constructor pages and Connectome Lab
 - deterministic race/replay generation and replay playback without neural resimulation
 - desktop and mobile layouts, touch Human Test controls and installable web-app metadata
+- low-power mobile rendering path, React/Three/vendor production code splitting and hosted runtime caching
 - production browser build published only after a Chromium render smoke test
 
 ## Full BANC v888 runtime
 
-The browser product now loads a version-locked sparse graph derived from the public **BANC v888 / v2** neuron-pair connectivity.
+The browser product loads a version-locked sparse graph derived from the public **BANC v888 / v2** neuron-pair connectivity.
 
 Pinned graph identity:
 
@@ -196,6 +202,6 @@ A publishable branch run must pass all of the following:
 
 ## Product boundary
 
-The original crashed-chat release blockers are closed: the BANC edge-count drift is repinned to the observed 11,752,828-pair v2 artifact, the hard runtime-readiness gate is active, and the tested production browser build is publishable again.
+The agreed 2027 browser-release checklist is closed. The full-BANC runtime, racing architecture, championship flow, final broadcast/pit-lane/podium presentation, constructor visual differentiation and mobile/browser optimisation pass are all part of the completed product.
 
-Further work is now presentation expansion rather than a missing core system: richer physical pit-lane/crew animation, more elaborate automated television/replay direction and continued bespoke art refinement can be added without changing the validated connectome/race architecture.
+Further physics-engine replacement, replay compression, additional authored audio or extra art variants are optional future expansion rather than unfinished requirements for this validated browser release.
