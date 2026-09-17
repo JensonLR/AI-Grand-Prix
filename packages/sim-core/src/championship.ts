@@ -1,4 +1,4 @@
-import type { Control,RaceIncident,TyreCompound } from '@agp/shared';
+import type { Control,RaceIncident,TyreCompound,CarState } from '@agp/shared';
 import { RaceSimulation,FIXED_DT,clamp,trackLength,trackPoint,trackTangent } from '@agp/sim-core';
 
 type PitPhase='REQUESTED'|'ENTRY'|'STOP'|'EXIT';
@@ -42,7 +42,7 @@ export class ChampionshipRaceSimulation extends RaceSimulation {
       if(this.state.flag==='SAFETY_CAR'){
         const index=ordered.findIndex(c=>c.id===car.id),ahead=index>0?ordered[index-1]:null;
         const target=index===0?28:30;
-        throttle=Math.min(throttle,car.speed<target?.38:.12);
+        throttle=Math.min(throttle,car.speed<target ? .38 : .12);
         if(car.speed>target+1)brake=Math.max(brake,.34);
         if(ahead){
           let gap=(ahead.lap+ahead.progress)-(car.lap+car.progress);if(gap<0)gap+=1;
@@ -110,12 +110,12 @@ export class ChampionshipRaceSimulation extends RaceSimulation {
       this.prepareRollingRestart();this.restartPending=false;this.state.flag='SAFETY_CAR';this.flagUntil=this.state.time+11;this.pushIncident('FLAG',this.redOrder.slice(0,1),'MEDIUM',this.state.cars[0]?.lap??0);return;
     }
     if(['YELLOW','VSC','SAFETY_CAR'].includes(this.state.flag)){
-      this.state.flag='GREEN';this.flagUntil=0;this.pushIncident('FLAG',[], 'LOW',this.state.cars[0]?.lap??0);
+      this.state.flag='GREEN';this.flagUntil=0;this.pushIncident('FLAG',[],'LOW',this.state.cars[0]?.lap??0);
     }
   }
 
   private prepareRollingRestart(){
-    const live=this.redOrder.map(id=>this.state.cars.find(c=>c.id===id)).filter((c):c is NonNullable<typeof c>=>Boolean(c&&c.status==='RUNNING'));
+    const live=this.redOrder.map(id=>this.state.cars.find(c=>c.id===id)).filter((c):c is CarState=>Boolean(c&&c.status==='RUNNING'));
     if(!live.length)return;
     const lapLen=trackLength(this.trackId),leaderScore=live[0].lap+live[0].progress,spacing=8.5/lapLen;
     live.forEach((car,i)=>{
