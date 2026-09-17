@@ -48,15 +48,15 @@ function addMesh(group:THREE.Group,geometry:THREE.BufferGeometry,material:THREE.
  */
 export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
   const g=new THREE.Group();
-  const seed=hash(e.provider),variant=seed%4;
+  const seed=hash(e.provider),teams=['McLARVAE RACING','MERCED-EYES','RED BUG RACING','SCUDERIA FLYRRARI','WINGLIAMS RACING','RACING BUGS','ASTON MIDGE','HAASFLY','AUD-EYE SPORT','FLYPINE','CADDIS-LAC RACING'],known=teams.indexOf(e.provider),variant=known>=0?known:seed%11;
   const body=mat(e.colour,.34,.15,1),secondary=mat(e.secondary,.25,.18,.92),accent=mat(e.accent,.48,.14,.9);
   const carbon=std('#050708',.78,.22),carbonSoft=std('#11151a',.62,.32),rubber=std('#070809',.03,.93),rim=std('#aeb5ba',.92,.17),brake=std('#5e6265',.8,.3),visor=mat('#061b28',.55,.08,.9);
   const floor=addMesh(g,new THREE.BoxGeometry(2.08,.075,5.05),carbon,[0,.18,.12]);
   floor.geometry.translate(0,0,-.05);
 
   // Main survival cell / engine cover.
-  const tub=addMesh(g,new THREE.CapsuleGeometry(.57,2.5,lowPower?6:10,lowPower?12:22),body,[0,.54,-.15],[Math.PI/2,0,0],[1,.92,1.12]);
-  const engine=addMesh(g,new THREE.CapsuleGeometry(.48,1.55,lowPower?5:9,lowPower?10:20),body,[0,.73,-1.55],[Math.PI/2,0,0],[1,.86,1]);
+  addMesh(g,new THREE.CapsuleGeometry(.57,2.5,lowPower?6:10,lowPower?12:22),body,[0,.54,-.15],[Math.PI/2,0,0],[1,.92,1.12]);
+  addMesh(g,new THREE.CapsuleGeometry(.48,1.55,lowPower?5:9,lowPower?10:20),body,[0,.73,-1.55],[Math.PI/2,0,0],[1,.86,1]);
   addMesh(g,new THREE.ConeGeometry(.31,2.48,lowPower?8:14),secondary,[0,.43,2.22],[Math.PI/2,0,0],[1,.9,1]);
   addMesh(g,new THREE.BoxGeometry(.22,.055,4.7),accent,[0,.88,-.05]);
 
@@ -112,28 +112,48 @@ export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
   const wheels:THREE.Mesh[]=[];
   const wheelSpecs=[[-1.48,.44,2.25,true],[1.48,.44,2.25,true],[-1.5,.49,-1.86,false],[1.5,.49,-1.86,false]] as const;
   for(const [x,y,z,front] of wheelSpecs){
-    const tyre=addMesh(g,new THREE.CylinderGeometry(front?.39:.43,front?.39:.43,front?.34:.39,lowPower?12:24),rubber,[x,y,z],[0,0,Math.PI/2]);
-    const outer=addMesh(g,new THREE.CylinderGeometry(front?.27:.29,front?.27:.29,.352,lowPower?12:24),rim,[x,y,z],[0,0,Math.PI/2]);
-    addMesh(g,new THREE.CylinderGeometry(front?.17:.19,front?.17:.19,.365,lowPower?10:18),brake,[x,y,z],[0,0,Math.PI/2]);
+    const tyre=addMesh(g,new THREE.CylinderGeometry(front ? .39 : .43,front ? .39 : .43,front ? .34 : .39,lowPower?12:24),rubber,[x,y,z],[0,0,Math.PI/2]);
+    const outer=addMesh(g,new THREE.CylinderGeometry(front ? .27 : .29,front ? .27 : .29,.352,lowPower?12:24),rim,[x,y,z],[0,0,Math.PI/2]);
+    addMesh(g,new THREE.CylinderGeometry(front ? .17 : .19,front ? .17 : .19,.365,lowPower?10:18),brake,[x,y,z],[0,0,Math.PI/2]);
     // Thin constructor-colour wheel ring for instant identity at race distance.
-    const ring=new THREE.Mesh(new THREE.TorusGeometry(front?.285:.305,.018,6,lowPower?16:28),accent);ring.position.set(x+(x>0?.2:-.2),y,z);ring.rotation.y=Math.PI/2;g.add(ring);
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(front ? .285 : .305,.018,6,lowPower?16:28),accent);ring.position.set(x+(x>0?.2:-.2),y,z);ring.rotation.y=Math.PI/2;g.add(ring);
     wheels.push(tyre);void outer;
-    const inboard=new THREE.Vector3(Math.sign(x)*.55,front?.34:.38,z+(front?-.14:.12));
+    const inboard=new THREE.Vector3(Math.sign(x)*.55,front ? .34 : .38,z+(front?-.14:.12));
     rod(g,inboard,new THREE.Vector3(x*.92,y+.13,z+.12),carbon,.022,6);
     rod(g,inboard.clone().setY(inboard.y+.18),new THREE.Vector3(x*.92,y-.09,z-.09),carbon,.022,6);
     rod(g,new THREE.Vector3(Math.sign(x)*.5,.27,z),new THREE.Vector3(x*.92,y,z),carbon,.018,6);
   }
 
-  // Livery geometry: constructor-wide language selected deterministically from team name.
-  if(variant===0){
-    for(const side of [-1,1])addMesh(g,new THREE.BoxGeometry(.045,.06,2.65),accent,[side*.63,.73,.25],[0,0,side*.23]);
-  }else if(variant===1){
-    addMesh(g,new THREE.BoxGeometry(1.18,.045,2.45),secondary,[0,.905,.38],[0,0,.16]);
-  }else if(variant===2){
-    for(const side of [-1,1])addMesh(g,new THREE.BoxGeometry(.05,.27,1.9),secondary,[side*.88,.6,-.85],[0,0,side*.14]);
-  }else{
-    addMesh(g,new THREE.BoxGeometry(.22,.05,3.9),accent,[0,.92,-.12],[0,0,-.08]);
-    for(const side of [-1,1])addMesh(g,new THREE.BoxGeometry(.038,.24,1.35),secondary,[side*.94,.58,.5],[0,0,side*.3]);
+  // Eleven constructor-specific livery languages. Team identity is geometry + palette, not paint alone.
+  if(variant===0){ // McLARVAE — papaya spear / black floor
+    addMesh(g,new THREE.BoxGeometry(.26,.05,3.7),secondary,[0,.92,-.05],[0,0,-.06]);
+    for(const side of [-1,1])addMesh(g,new THREE.BoxGeometry(.045,.18,2.1),accent,[side*.93,.56,-.48],[0,0,side*.23]);
+  }else if(variant===1){ // MERCED-EYES — teal silver technical ribbon
+    addMesh(g,new THREE.BoxGeometry(1.08,.045,2.58),secondary,[0,.91,.3],[0,0,.12]);
+    for(const side of [-1,1])addMesh(g,new THREE.BoxGeometry(.035,.10,2.8),accent,[side*.74,.76,-.15],[0,0,side*.08]);
+  }else if(variant===2){ // RED BUG — aggressive cobalt/red slash
+    for(const side of [-1,1]){addMesh(g,new THREE.BoxGeometry(.055,.31,1.92),secondary,[side*.9,.59,-.82],[0,0,side*.23]);addMesh(g,new THREE.BoxGeometry(.04,.2,1.45),accent,[side*.99,.49,.55],[0,0,-side*.34]);}
+  }else if(variant===3){ // FLYRRARI — central gold spine / deep body
+    addMesh(g,new THREE.BoxGeometry(.17,.055,4.12),accent,[0,.93,-.1],[0,0,0]);
+    for(const side of [-1,1])addMesh(g,new THREE.BoxGeometry(.03,.14,1.82),secondary,[side*.97,.63,-.56],[0,0,side*.15]);
+  }else if(variant===4){ // WINGLIAMS — ivory geometric nose and cyan edge
+    addMesh(g,new THREE.BoxGeometry(.62,.055,2.8),secondary,[0,.9,1.05],[0,0,-.14]);
+    for(const side of [-1,1])addMesh(g,new THREE.BoxGeometry(.035,.09,3.0),accent,[side*.89,.69,-.18],[0,0,side*.16]);
+  }else if(variant===5){ // RACING BUGS — violet emerald chevrons
+    for(const side of [-1,1]){addMesh(g,new THREE.BoxGeometry(.04,.22,1.58),accent,[side*.91,.61,.42],[0,0,side*.42]);addMesh(g,new THREE.BoxGeometry(.035,.16,1.3),secondary,[side*.9,.54,-.98],[0,0,-side*.28]);}
+  }else if(variant===6){ // ASTON MIDGE — British green with gold beltline
+    for(const side of [-1,1])addMesh(g,new THREE.BoxGeometry(.035,.07,3.25),accent,[side*.83,.71,-.16],[0,0,side*.04]);
+    addMesh(g,new THREE.BoxGeometry(.5,.045,2.05),secondary,[0,.9,.58],[0,0,.09]);
+  }else if(variant===7){ // HAASFLY — silver technical blocks with red strike
+    addMesh(g,new THREE.BoxGeometry(.92,.045,2.68),secondary,[0,.91,.2],[0,0,.13]);
+    for(const side of [-1,1])addMesh(g,new THREE.BoxGeometry(.04,.26,1.8),accent,[side*.95,.58,-.42],[0,0,-side*.31]);
+  }else if(variant===8){ // AUD-EYE — burnt orange / ice-blue signal lines
+    for(const side of [-1,1]){addMesh(g,new THREE.BoxGeometry(.035,.08,3.12),accent,[side*.81,.72,-.12],[0,0,-side*.12]);addMesh(g,new THREE.BoxGeometry(.04,.18,1.22),secondary,[side*.96,.55,-1.05],[0,0,side*.23]);}
+  }else if(variant===9){ // FLYPINE — blue/pink mountain sweep
+    for(const side of [-1,1]){addMesh(g,new THREE.BoxGeometry(.045,.22,2.32),secondary,[side*.9,.6,-.25],[0,0,side*(e.number%2 ? .35 : .27)]);addMesh(g,new THREE.BoxGeometry(.035,.07,2.6),accent,[side*.78,.75,.02],[0,0,-side*.09]);}
+  }else{ // CADDIS-LAC — stealth black with gold/teal pinstripes
+    addMesh(g,new THREE.BoxGeometry(.24,.05,3.98),secondary,[0,.92,-.08],[0,0,-.05]);
+    for(const side of [-1,1]){addMesh(g,new THREE.BoxGeometry(.032,.08,3.0),accent,[side*.84,.7,-.14],[0,0,side*.12]);addMesh(g,new THREE.BoxGeometry(.026,.12,1.8),secondary,[side*.98,.54,-.64],[0,0,-side*.2]);}
   }
 
   // High-resolution readable identifiers; no baked AI-generated text.
@@ -145,8 +165,11 @@ export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
     const decal=addMesh(g,new THREE.PlaneGeometry(1.42,.36),tmat.clone(),[side*1.075,.61,-.67],[0,side>0?Math.PI/2:-Math.PI/2,0]);decal.renderOrder=5;
   }
 
+  const sprayMaterial=new THREE.MeshBasicMaterial({color:'#e9f2f6',transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide});
+  const sprays=[-1,1].map(side=>addMesh(g,new THREE.ConeGeometry(.24,1.55,lowPower?5:8,1,true),sprayMaterial.clone(),[side*1.22,.35,-2.48],[-Math.PI/2,0,0],[1,1,1]));
+  sprays.forEach(x=>{x.visible=false;x.renderOrder=2;});
   const rain=addMesh(g,new THREE.BoxGeometry(.28,.10,.055),new THREE.MeshStandardMaterial({color:'#f32626',emissive:'#f32626',emissiveIntensity:3.2}),[0,.55,-2.98]);
-  g.userData.rainLight=rain;g.userData.wheels=wheels;g.userData.premiumCar=true;g.userData.team=e.provider;g.userData.variant=variant;
+  g.userData.rainLight=rain;g.userData.wheels=wheels;g.userData.spray=sprays;g.userData.premiumCar=true;g.userData.team=e.provider;g.userData.variant=variant;
   g.scale.setScalar(.78);
   return g;
 }

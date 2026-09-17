@@ -6,5 +6,7 @@ import './championship.css';
 import './weekend.css';
 import './phenotype.css';
 import './season.css';
+import './premium.css';
+import './constructor-marks.css';
 
 createRoot(document.getElementById('root')!).render(<StrictMode><ChampionshipApp/></StrictMode>);
