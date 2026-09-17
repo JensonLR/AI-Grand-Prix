@@ -1,4 +1,4 @@
-const CACHE='agp-cwc-v888-2027-v2';
+const CACHE='agp-cwc-v888-2027-v3-premium-mobile';
 const STATIC=/\.(?:js|css|woff2?|glb|svg|png|webp|json|u8|u16|u32|txt)$/i;
 const BANC='/connectome/banc-v888-full/';
 const sw=globalThis,cacheApi=globalThis.caches;
@@ -27,5 +27,8 @@ sw.addEventListener('fetch',event=>{
   const url=new URL(request.url);if(url.origin!==sw.location.origin)return;
   const relative=url.pathname;
   if(request.mode==='navigate'){event.respondWith(networkFirst(request));return;}
-  if(relative.includes(BANC)||STATIC.test(relative))event.respondWith(cacheFirst(request));
+  // The connectome binaries are immutable and large, so keep them cache-first. Presentation
+  // assets are network-first to prevent an iPhone/PWA from pinning an obsolete car or UI.
+  if(relative.includes(BANC)){event.respondWith(cacheFirst(request));return;}
+  if(STATIC.test(relative))event.respondWith(networkFirst(request));
 });
