@@ -23,3 +23,5 @@ await patch('apps/web/src/ChampionshipApp.tsx',s=>{
   s=s.replace("<small>{ENTRANTS.filter(d=>d.teamId===t.id).map(d=>d.name).join(' · ')}</small>","<small>{ENTRANTS.filter(d=>d.teamId===t.id).map(d=>d.name).join(' · ')} · {constructorDevelopment(t,round).packageName}</small>");
   return s;
 });
+
+await patch('apps/web/src/main.tsx',s=>s.includes("./development.css")?s:s.replace("import './constructor-marks.css';","import './constructor-marks.css';\nimport './development.css';"));
