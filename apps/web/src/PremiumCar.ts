@@ -190,6 +190,13 @@ export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
   const teamTexture=identityTexture(e,'team'),teamMaterial=new THREE.MeshBasicMaterial({map:teamTexture,transparent:true,depthWrite:false,side:THREE.DoubleSide});
   for(const side of [-1,1]){const decal=add(g,new THREE.PlaneGeometry(1.26,.30),teamMaterial.clone(),[side*1.015,.61,-.72],[0,side>0?Math.PI/2:-Math.PI/2,0]);decal.renderOrder=5;}
 
+  // Constructor signature pass: eleven readable identities remain distinct at TV distance.
+  const signature=variant%2===0?accent:secondary,signatureAngle=.05+(variant%5)*.035;
+  for(const side of [-1,1])add(g,new THREE.BoxGeometry(.028,.075,.92),signature,[side*(.34+(variant%3)*.06),.79,2.02-(variant%4)*.14],[0,0,side*signatureAngle]);
+  if(variant%3===0)add(g,new THREE.BoxGeometry(.58,.035,.16),secondary,[0,1.04,-1.58],[0,0,.08]);
+  else if(variant%3===1)add(g,new THREE.BoxGeometry(.035,.28,.58),accent,[0,1.04,-1.64],[0,0,-.10]);
+  else for(const side of [-1,1])add(g,new THREE.BoxGeometry(.035,.15,.42),secondary,[side*.28,1.00,-1.58],[0,0,side*.12]);
+
   // Wet-race effects.
   const sprayMaterial=new THREE.MeshBasicMaterial({color:'#edf5f8',transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide});
   const sprays=[-1,1].map(side=>add(g,new THREE.ConeGeometry(.22,1.48,lowPower?5:8,1,true),sprayMaterial.clone(),[side*1.20,.34,-2.42],[-Math.PI/2,0,0]));sprays.forEach(m=>{m.visible=false;m.renderOrder=2;});
