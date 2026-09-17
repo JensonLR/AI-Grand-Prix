@@ -5,6 +5,8 @@ import { DeterministicDriver } from '@agp/driver-sdk';
 import type { Control,RaceConfig,RaceState,ReplayFile,Weather } from '@agp/shared';
 import { GrandPrixScene,type CameraMode,type Entrant as LegacyEntrant } from './GrandPrixScene';
 import { ENTRANTS as CWC_DRIVERS,TEAMS,teamFor } from './championship';
+import { PersistentDriver } from './PersistentDriver';
+import { constructorDevelopment } from './constructorDevelopment';
 
 export type { CameraMode };
 
@@ -53,10 +55,10 @@ const humanEntrant:LegacyEntrant={
 };
 
 const internal=(scene:GrandPrixScene)=>scene as unknown as SceneInternals;
-const tuningFor=(id:string,neutral:boolean)=>{
+const tuningFor=(id:string,neutral:boolean,round=1)=>{
   if(neutral||id==='human')return undefined;
   const driver=CWC_DRIVERS.find(d=>d.id===id);
-  return driver?teamFor(driver).tuning:undefined;
+  if(!driver)return undefined;const team=teamFor(driver);return constructorDevelopment(team,round).tuning;
 };
 
 /**
@@ -67,6 +69,7 @@ const tuningFor=(id:string,neutral:boolean)=>{
 export class FlyGrandPrixScene extends GrandPrixScene {
   override startRace(config:RaceConfig){
     const s=internal(this),trackId=config.trackId??DEFAULT_2027_TRACK_ID;
+    for(const driver of s.drivers.values())if(driver instanceof PersistentDriver)driver.persist();
     this.setTrack(trackId);
     s.clearCars();
     s.sceneMode=config.session==='HUMAN_TEST'?'human':'live';
@@ -77,8 +80,9 @@ export class FlyGrandPrixScene extends GrandPrixScene {
     const selected=[...pool.slice(0,requested)];
     if(s.sceneMode==='human')selected[0]=humanEntrant;
     const neutral=config.session==='NEUTRAL_TEST';
+    const persistDevelopment=!['NEUTRAL_TEST','BENCHMARK'].includes(config.session);
     const states=selected.map((e,i)=>{
-      const car=createCar(e.id,e.name,e.number,e.colour,i,tuningFor(e.id,neutral),trackId);
+      const car=createCar(e.id,e.name,e.number,e.colour,i,tuningFor(e.id,neutral,config.championshipRound??1),trackId);
       if(e.id!=='human'){
         const d=CWC_DRIVERS.find(x=>x.id===e.id);
         if(d){car.teamId=d.teamId;car.teamName=d.teamName;}
@@ -89,7 +93,7 @@ export class FlyGrandPrixScene extends GrandPrixScene {
     for(const e of selected){
       s.entrants.set(e.id,e);
       if(e.id!=='human'){
-        s.drivers.set(e.id,new DeterministicDriver(e.id,e.name));
+        s.drivers.set(e.id,new PersistentDriver(e.id,e.name,persistDevelopment));
         s.controls.set(e.id,{steering:0,throttle:.82,brake:0,energyDeploy:0});
       }
       const mesh=s.makeCar(e);s.cars.set(e.id,mesh);s.scene.add(mesh);
@@ -99,12 +103,13 @@ export class FlyGrandPrixScene extends GrandPrixScene {
 
   override async loadReplay(replay:ReplayFile){
     const s=internal(this),trackId=replay.trackId??DEFAULT_2027_TRACK_ID;
+    for(const driver of s.drivers.values())if(driver instanceof PersistentDriver)driver.persist();
     this.setTrack(trackId);
     s.clearCars();s.sceneMode='replay';s.replay=replay;s.replayTime=0;s.replayDuration=replay.frames.at(-1)?.t??0;s.paused=false;s.weather='CLEAR';s.applyWeather();
     const first=replay.frames[0];if(!first)throw new Error('Replay has no frames');
     const entrants=first.cars.map((c,i)=>ENTRANTS.find(e=>e.id===c.id)??{...ENTRANTS[i%ENTRANTS.length],id:c.id,name:c.id.toUpperCase()});
     const states=entrants.map((e,i)=>{
-      const car=createCar(e.id,e.name,e.number,e.colour,i,tuningFor(e.id,false),trackId);
+      const car=createCar(e.id,e.name,e.number,e.colour,i,tuningFor(e.id,false,replay.championshipRound??1),trackId);
       const d=CWC_DRIVERS.find(x=>x.id===e.id);if(d){car.teamId=d.teamId;car.teamName=d.teamName;}
       return car;
     });

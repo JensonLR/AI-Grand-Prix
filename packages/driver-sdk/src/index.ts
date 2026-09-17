@@ -29,6 +29,8 @@ export interface DriverAdapter{
 export interface Phenotype{
   id:string;seed:number;firingThreshold:number;membraneLeak:number;synapticGain:number;sensoryNoise:number;conductionDelay:number;adaptation:number;plasticityRate:number;decoderCalibration:number;
 }
+export interface DriverDevelopmentState{version:1;exposureDecisions:number;readoutCalibration:number[];}
+
 
 export function hashSeed(text:string){let h=2166136261>>>0;for(const ch of text){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)>>>0;}return h||1;}
 class PRNG{constructor(private s:number){}next(){let x=this.s|0;x^=x<<13;x^=x>>>17;x^=x<<5;this.s=x|0;return(x>>>0)/4294967296;}sym(){return this.next()*2-1;}}
@@ -73,7 +75,7 @@ export class AGPConnectomeDriver implements DriverAdapter{
   provider='AGP LOCAL NEURAL INTERFACE';displayName:string;readonly phenotype:Phenotype;
   private v=new Float64Array(N);private spike=new Float64Array(N);private activity=new Float64Array(N);
   private weights=Array.from({length:N},()=>new Float64Array(N));private baseline=new Float64Array(N);
-  private lastSteer=0;private adaptedReadout=new Float64Array(5);private rng:PRNG;private homeostaticGain=1;
+  private lastSteer=0;private adaptedReadout=new Float64Array(5);private rng:PRNG;private homeostaticGain=1;private exposureDecisions=0;
 
   constructor(public id:string,name:string,legacySalt=0){
     this.displayName=name;const seed=(hashSeed(id)^(Math.round(legacySalt*1000)>>>0))>>>0;
@@ -112,6 +114,7 @@ export class AGPConnectomeDriver implements DriverAdapter{
     s[8]=clamp(.35+(targetSpeed-o.car.speed)/42+noise(),0,1.5);
     s[9]=clamp(Math.max(0,(o.car.speed-targetSpeed)/25)+curvature*.42+noise(),0,1.5);
     s[10]=clamp(slip*.48+o.race.wetness*.30+noise(),0,1.5);s[11]=clamp(looming+noise(),0,1.5);
+    const sensoryCalibration=1+this.adaptedReadout[4];for(let i=0;i<s.length;i++)s[i]=clamp(s[i]*sensoryCalibration,0,1.5);
     return s;
   }
 
@@ -151,11 +154,16 @@ export class AGPConnectomeDriver implements DriverAdapter{
     const clean=o.car.surface==='asphalt'&&o.car.damage<.15,reinforcement=clean?clamp((o.car.speed/94)-Math.abs(steering)*.06,0,1):-.45;
     this.adaptedReadout[1]=clamp(this.adaptedReadout[1]+reinforcement*this.phenotype.plasticityRate*.002,-.035,.035);
     this.adaptedReadout[2]=clamp(this.adaptedReadout[2]+(clean?-.2:.6)*this.phenotype.plasticityRate*.001,-.025,.045);
+    this.adaptedReadout[4]=clamp(this.adaptedReadout[4]+reinforcement*this.phenotype.plasticityRate*.00035,-.018,.018);
     return{steering,throttle,brake,energyDeploy,reinforcement};
   }
 
+  exportDevelopmentState():DriverDevelopmentState{return{version:1,exposureDecisions:this.exposureDecisions,readoutCalibration:Array.from(this.adaptedReadout).map(v=>+v.toFixed(8))};}
+  importDevelopmentState(state:DriverDevelopmentState|undefined){if(!state||state.version!==1)return;this.exposureDecisions=Math.max(0,Math.floor(state.exposureDecisions||0));for(let i=0;i<Math.min(5,state.readoutCalibration?.length??0);i++){const limit=i===4 ? .018 : i===2 ? .045 : .035;this.adaptedReadout[i]=clamp(Number(state.readoutCalibration[i])||0,-limit,limit);}}
+  resetTransientNeuralState(){this.v.fill(0);this.spike.fill(0);this.activity.fill(0);this.lastSteer=0;this.homeostaticGain=1;}
+
   async decide(o:DriverObservation):Promise<DriverDecision>{
-    const started=performanceNow(),sensors=this.sensoryEncode(o),substeps=Math.max(5,Math.round(6*this.phenotype.conductionDelay));let spikeCount=0;
+    this.exposureDecisions++;const started=performanceNow(),sensors=this.sensoryEncode(o),substeps=Math.max(5,Math.round(6*this.phenotype.conductionDelay));let spikeCount=0;
     for(let i=0;i<substeps;i++)spikeCount+=this.runNeuralStep(sensors);
     const out=this.decode(o),elapsed=Math.max(.02,performanceNow()-started),active=Array.from(this.activity).filter(v=>v>.08).length;
     const telemetry:NeuralTelemetry={phenotypeId:this.phenotype.id,source:'AGP_SIMULATION_INTERFACE',activeNeurons:active,spikeRate:+((spikeCount/substeps)*20).toFixed(1),visualActivity:+(sensors.slice(0,8).reduce((a,b)=>a+b,0)/8).toFixed(3),descendingActivity:+mean(this.activity,[OUTPUT_LEFT,OUTPUT_RIGHT,OUTPUT_THROTTLE,OUTPUT_BRAKE]).toFixed(3),steeringOutput:+out.steering.toFixed(3),throttleOutput:+out.throttle.toFixed(3),brakeOutput:+out.brake.toFixed(3),reinforcementSignal:+out.reinforcement.toFixed(3),interfaceLatencyMs:+elapsed.toFixed(2),connectomeSimRate:substeps*20};

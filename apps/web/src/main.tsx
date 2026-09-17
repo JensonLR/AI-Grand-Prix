@@ -8,5 +8,6 @@ import './phenotype.css';
 import './season.css';
 import './premium.css';
 import './constructor-marks.css';
+import './development.css';
 
 createRoot(document.getElementById('root')!).render(<StrictMode><ChampionshipApp/></StrictMode>);
