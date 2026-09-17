@@ -20,6 +20,8 @@ jobs:
         run: node scripts/patch-multitrack-scene.mjs
       - name: Apply championship season UI
         run: node scripts/patch-connectome-ui.mjs && node scripts/patch-season-ui.mjs
+      - name: Apply premium vehicle, circuit and broadcast finish
+        run: node scripts/patch-premium-visuals.mjs
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
@@ -49,9 +51,9 @@ jobs:
         run: |
           git config user.name "AGP CI"
           git config user.email "actions@users.noreply.github.com"
-          git add packages/sim-core/src/index.ts packages/sim-core/src/generated/season2027.ts packages/driver-sdk/src/index.ts apps/web/src/GrandPrixScene.ts apps/web/src/ChampionshipApp.tsx apps/web/public/tracks/season2027.json
+          git add packages/sim-core/src/index.ts packages/sim-core/src/generated/season2027.ts packages/driver-sdk/src/index.ts apps/web/src/GrandPrixScene.ts apps/web/src/ChampionshipApp.tsx apps/web/src/main.tsx apps/web/public/tracks/season2027.json
           if ! git diff --cached --quiet; then
-            git commit -m "Persist validated 2027 championship geometry and source [skip ci]"
+            git commit -m "Persist validated premium championship source [skip ci]"
             git push origin HEAD:connectome-world-championship || echo "A newer championship commit exists; source persistence deferred to its validation run."
           fi
       - name: Publish browser preview branch
@@ -62,4 +64,4 @@ jobs:
           publish_branch: browser-preview
           publish_dir: ./apps/web/dist
           force_orphan: true
-          commit_message: Publish tested 2027 Connectome World Championship browser build
+          commit_message: Publish tested premium 2027 Connectome World Championship browser build
