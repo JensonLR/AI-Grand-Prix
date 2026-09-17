@@ -2,6 +2,15 @@ import { readFile,writeFile } from 'node:fs/promises';
 
 async function patch(path,fn){const before=await readFile(path,'utf8'),after=fn(before);if(after!==before){await writeFile(path,after);console.log(`patched ${path}`)}else console.log(`already current ${path}`)}
 
+await patch('apps/web/src/PremiumCar.ts',s=>s
+  .replaceAll('front?.39:.43','front ? .39 : .43')
+  .replaceAll('front?.34:.39','front ? .34 : .39')
+  .replaceAll('front?.27:.29','front ? .27 : .29')
+  .replaceAll('front?.17:.19','front ? .17 : .19')
+  .replaceAll('front?.285:.305','front ? .285 : .305')
+  .replaceAll('front?.34:.38','front ? .34 : .38')
+);
+
 await patch('apps/web/src/GrandPrixScene.ts',s=>{
   if(!s.includes("from './PremiumCar'"))s=s.replace("import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';",`import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';\nimport { buildPremiumFormulaCar } from './PremiumCar';\nimport { decoratePremiumCircuit } from './PremiumCircuit';`);
   s=s.replace("export type CameraMode='broadcast'|'chase'|'cockpit'|'trackside'|'aerial';","export type CameraMode='broadcast'|'chase'|'cockpit'|'tcam'|'trackside'|'aerial'|'neural';");
