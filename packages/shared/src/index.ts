@@ -1,6 +1,6 @@
 export const VERSION = {
   sim: '0.4.0',
-  car: 'AGP-01/0.2',
+  car: 'AGP-27/1.0',
   track: 'AGP-2027-MULTITRACK/1',
   protocol: 'AGP-BANC-V888/1',
   prompt: 'AGP-CWC/1'
