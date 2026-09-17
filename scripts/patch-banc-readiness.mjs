@@ -18,7 +18,11 @@ function patchApp(){
     if(!src.includes(marker))throw new Error('BANC readiness patch: mount effect marker missing');
     src=src.replace(marker,"  useEffect(()=>{const unsubscribe=bancRuntime.subscribe(setBancInfo);preloadBancRuntime();return unsubscribe},[]);\n"+marker);
   }
-  src=src.replace("gp.startRace({...initialConfig,entrants:22,trackId:round.id,championshipRound:round.round});","gp.startRace({...initialConfig,session:'HUMAN_TEST',entrants:1,trackId:round.id,championshipRound:undefined});");
+  const oldOpeningStart="gp.startRace({...initialConfig,entrants:22,trackId:round.id,championshipRound:round.round});gp.setFocus(ENTRANTS[0].id);gp.setCamera('broadcast');gp.start();gp.setPaused(true);";
+  if(src.includes(oldOpeningStart)){
+    const safeOpeningStart="gp.start();gp.setPaused(true);void ensureBancRuntimeReady().then(()=>{if(scene.current!==gp)return;gp.startRace({...initialConfig,entrants:22,trackId:round.id,championshipRound:round.round});gp.setFocus(ENTRANTS[0].id);gp.setCamera('broadcast');gp.setPaused(true);}).catch(e=>setError(e instanceof Error?e.message:'Full BANC v888 runtime is unavailable'));";
+    src=src.replace(oldOpeningStart,safeOpeningStart);
+  }
   if(!src.includes('const ensureBanc=async()=>')){
     const marker='  const navigate=(next:Screen)=>';
     if(!src.includes(marker))throw new Error('BANC readiness patch: navigate marker missing');
