@@ -12,6 +12,7 @@ require(home.includes('24-ROUND CALENDAR')&&home.includes('CURRENT CHAMPIONSHIP 
 require(scene.includes('buildPremiumWorld(this.worldGroup'), 'circuit-specific world generator is not active');
 require(!scene.includes("this.startRace({session:'QUICK_RACE',laps:3,entrants:8"), 'legacy 8-car constructor auto-start still active');
 require(!scene.includes('this.makeLandscape();this.makeVenue();decoratePremiumCircuit'), 'legacy Azure Coast venue path still active in setTrack');
+require(!app.includes('AZURE COAST'), 'legacy Azure Coast is still exposed in the player-facing product shell');
 require(calendar.includes('"id":"bh-2002","round":1'), 'Bahrain is not round one in generated calendar');
 require(calendar.includes('"id":"ae-2009","round":24'), 'Abu Dhabi is not round 24 in generated calendar');
 require((calendar.match(/"round":/g)??[]).length===24,'generated championship does not contain exactly 24 rounds');
