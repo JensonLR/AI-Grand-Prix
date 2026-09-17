@@ -1,3 +1,4 @@
+/* global console, process */
 import {readFile} from 'node:fs/promises';
 const [app,scene,opening,home,world,calendar]=await Promise.all([
   readFile('apps/web/src/ChampionshipApp.tsx','utf8'),readFile('apps/web/src/GrandPrixScene.ts','utf8'),readFile('apps/web/src/Opening2027.tsx','utf8'),readFile('apps/web/src/PaddockHome.tsx','utf8'),readFile('apps/web/src/PremiumWorld.ts','utf8'),readFile('packages/sim-core/src/generated/season2027.ts','utf8')
