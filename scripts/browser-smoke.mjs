@@ -1,4 +1,4 @@
-/* global document, HTMLCanvasElement */
+/* global document, HTMLCanvasElement, innerWidth, innerHeight, getComputedStyle */
 import {chromium} from 'playwright';
 
 const browser=await chromium.launch({headless:true});
