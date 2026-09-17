@@ -1,5 +1,9 @@
 import fs from 'node:fs';
 
+const BANC_NEURONS=188508;
+const BANC_DIRECTED_PAIRS=11752828;
+const BANC_MATERIALIZATION=888;
+
 function patchApp(){
   const file='apps/web/src/ChampionshipApp.tsx';
   let src=fs.readFileSync(file,'utf8'),before=src;
@@ -18,7 +22,7 @@ function patchApp(){
   if(!src.includes('const ensureBanc=async()=>')){
     const marker='  const navigate=(next:Screen)=>';
     if(!src.includes(marker))throw new Error('BANC readiness patch: navigate marker missing');
-    src=src.replace(marker,"  const ensureBanc=async()=>{setError('');try{const info=await ensureBancRuntimeReady();if(info.neurons!==188508||info.edges!==11510975||info.materialization!==888)throw new Error('Full BANC v888 identity check failed');return true}catch(e){setError(e instanceof Error?e.message:'Full BANC v888 runtime is unavailable');return false}};\n"+marker);
+    src=src.replace(marker,`  const ensureBanc=async()=>{setError('');try{const info=await ensureBancRuntimeReady();if(info.neurons!==${BANC_NEURONS}||info.edges!==${BANC_DIRECTED_PAIRS}||info.materialization!==${BANC_MATERIALIZATION})throw new Error('Full BANC v888 identity check failed');return true}catch(e){setError(e instanceof Error?e.message:'Full BANC v888 runtime is unavailable');return false}};\n`+marker);
   }
   src=src.replace('  const launch=()=>{saved.current=',"  const launch=async()=>{if(!(await ensureBanc()))return;saved.current=");
   src=src.replace('  const runWeekend=(stage:WeekendStage)=>{saved.current=',"  const runWeekend=async(stage:WeekendStage)=>{if(!(await ensureBanc()))return;saved.current=");
