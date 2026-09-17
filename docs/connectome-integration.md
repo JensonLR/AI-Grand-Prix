@@ -1,142 +1,151 @@
 # Connectome integration and scientific integrity
 
-AI Grand Prix is a motorsport simulation and an engineering experiment. The project deliberately separates biological source data from AGP-specific simulation assumptions.
+AI Grand Prix is both a racing product and an engineering experiment. This document separates source biological connectivity from AI Grand Prix modelling assumptions.
 
-## 1. Real connectome data
+## 1. Biological source
 
-The full-connectome target is **BANC v888**, the Female Adult Fly Brain and Nerve Cord dataset.
+The browser runtime target is **BANC v888**, the adult female *Drosophila melanogaster* brain-and-nerve-cord connectome used by the 2026 BANC publication.
 
-Current public dataset statistics in FlyWire Codex:
+The version-locked AGP graph build currently preserves:
 
-- dataset: BANC
-- snapshot: v888
-- organism: adult female *Drosophila melanogaster*
-- scope: brain + ventral nerve cord / central nervous system
-- neurons: 158,262
-- thresholded connections: 3,037,361
+- **188,508** mapped metadata rows
+- **11,752,828** directed neuron pairs from the public v2 simple edge list
+- materialization **888**
+- source root/neuron identifiers in `node-ids.txt`
 
-Primary references:
+Primary references recorded by the generated manifest include:
 
-- Bates AS, Phelps JS, Kim M et al. *Distributed control circuits across a brain-and-cord connectome*. Nature 656, 957–970 (2026). DOI: https://doi.org/10.1038/s41586-026-10735-w
-- BANC portal: https://banc.community
-- FlyWire Codex BANC explorer: https://codex.flywire.ai/?dataset=banc
-- Static archive described by the Nature paper: https://doi.org/10.7910/DVN/7WTH1N
+- Bates AS, Phelps JS, Kim M et al. *Distributed control circuits across a brain-and-cord connectome*. Nature (2026). DOI: `10.1038/s41586-026-10735-w`
+- BANC static archive: `10.7910/DVN/7WTH1N`
+- pinned BANC-project metadata snapshot
+- official public BANC v888 v2 GCS edge-list artifact
 
-The Nature paper reports a unified adult brain-and-nerve-cord connectome and states that the final print analyses use BANC segmentation/metadata v888 (17 April 2026) with the v2 synapse table. Codex exposes v888 as the current public BANC release.
+The exact source URLs and SHA-256 values are stored in `apps/web/public/connectome/banc-v888-full/manifest.json`. The graph builder fails when the observed source identity or row counts drift from the pinned contract.
 
-Codex recommends public bulk analysis through its static downloadable files rather than scraping interactive queries. The expected future AGP import therefore starts from versioned static BANC data products, not a live web dependency during a race.
+## 2. Bundled browser graph
 
-## 2. What the bundled browser driver is
+The processed browser graph is committed under:
 
-The browser build currently uses an **AGP SIMULATION INTERFACE**, not the full BANC network.
+`apps/web/public/connectome/banc-v888-full/`
 
-It is a compact, LIF-inspired aggregate neural system with 48 internal states. It exists so the browser build can already enforce the important causal architecture:
+Files:
 
-`racing world -> sensory encoder -> neural state -> constrained motor readout -> car controls -> new world state`
+- `manifest.json` — source identity, hashes, schema and runtime contract
+- `offsets.u32` — CSR offsets
+- `targets.u32` — directed targets
+- `counts.u16` — pair connection counts
+- `count-overflow.json` — exact values where a count cannot fit the base storage
+- `roles.u8` — mapped functional role labels
+- `sensory-buckets.u8` — sensory/visual racing-interface population assignment
+- `motor-buckets.u8` — descending/motor racing-interface population assignment
+- `node-ids.txt` — source node/root identifiers in graph order
 
-The motor readout receives neural activity. It does not receive circuit coordinates, an ideal racing line, target steering, target speed or an optimal braking point.
+The current processed payload is **75,418,182 bytes**. The public source Feather/Parquet files themselves are not required at race time.
 
-This gives the project a testable causal neural-control path without falsely claiming that a 158,262-neuron BANC simulation is already running in the browser.
+## 3. Runtime architecture
 
-## 3. Simulation assumptions
+The graph loads in a Web Worker rather than the Three.js render thread. Browser race startup is blocked unless the worker proves:
 
-The following are AGP engineering assumptions, not established neuroscience:
+- schema `BANC-V888-FULL-GRAPH/1`
+- materialization `888`
+- 188,508 graph rows
+- 11,752,828 directed pairs
+- `offsets.length === neurons + 1`
+- target/count arrays contain every directed pair
+- sensory/motor annotation arrays cover every graph row
+- the final CSR offset equals the complete pair count
 
-- the mapping from racing observations into aggregate sensory channels
-- the 48-state compact LIF-inspired topology
-- bounded phenotype perturbations around that topology
-- slow homeostatic gain regulation used to keep phenotype activity in a viable operating envelope
-- the definition of simulated reinforcement signals
-- the mapping from descending aggregate activity into steering, throttle and braking
-- constructor-specific sensory filtering and decoder/control-response budgets
+The control loop is:
 
-These are always labelled **AGP SIMULATION INTERFACE** in the product.
+```text
+race world
+  -> AGP sensory transduction
+  -> BANC sensory / visual populations
+  -> sparse graph neural dynamics
+  -> descending / motor populations
+  -> constrained AGP decoder
+  -> steering / throttle / brake / energy deployment
+  -> authoritative race physics
+  -> next world state
+```
 
-## 4. Persistent driver phenotypes
+The decoder does not receive an ideal racing line, absolute circuit coordinates, target steering, target speed or a hidden optimal brake point.
 
-All championship drivers share the same fundamental aggregate topology in the current browser implementation.
+## 4. What "full BANC runtime" means
 
-A permanent seed generates tightly bounded differences in:
+AI Grand Prix loads and validates the **complete pinned BANC v888/v2 neuron-pair topology**. Neural activity is sparse: each decision propagates activity from a bounded active frontier rather than iterating every edge indiscriminately. Active nodes use their real outgoing edges from the complete CSR graph.
 
-- firing threshold
-- membrane leak
-- synaptic gain
-- sensory noise
-- conduction delay
-- adaptation
-- plasticity rate
-- decoder calibration
-- small weight perturbations on the shared topology
+This keeps the browser workload bounded without replacing the graph with a separate toy topology.
 
-The seed is deterministic and stable across sessions. There are no hand-written pace, cornering, rain or aggression skill multipliers.
+It does **not** mean the project has recreated a living fly or that every biological mechanism is known.
 
-The current phenotype envelope was tightened after measured race validation showed that a wider neural parameter range could amplify tiny seeded differences into an excessively large lap-time spread. The solution was to constrain physiological variation and add slow homeostatic activity regulation rather than introduce a hidden racing controller.
+## 5. AGP modelling assumptions
 
-## 5. Decoder constraint
+The following are game/simulation assumptions and must not be presented as established neuroscience:
 
-The decoder is intentionally small and shallow. Its permitted inputs are selected neural activity values produced by the neural system. Tests should fail if a decoder path gains access to forbidden information such as absolute track coordinates, ideal racing-line coordinates, target steering, target speed or optimal brake point.
+- mapping racing observations to sensory stimulation
+- LIF-like voltage/activity state
+- firing threshold and leak rules
+- global inhibition/homeostatic behaviour
+- sparse active-frontier execution
+- unsigned treatment of v2 pair counts as connection-strength input
+- phenotype seed perturbations and calibration
+- short- and long-timescale learning/development rules
+- mapping descending/motor activity to vehicle controls
+- constructor interface/control trade-offs
 
-The sensory encoder is allowed to derive fictional racing sensory channels from the world because it is explicitly the AGP interface between environment and nervous-system simulation.
+The runtime manifest deliberately states this boundary.
 
-## 6. State policy
+## 6. Twenty-two persistent drivers
 
-| State | Current policy |
+The championship does not claim 22 separately reconstructed biological flies.
+
+All 22 drivers share the same version-locked BANC topology. Each receives:
+
+- a permanent deterministic phenotype seed
+- bounded calibration/physiology differences
+- an independent live neural state array
+- persistent championship development only where the product contract allows it
+
+Quick Race, Human Test and neutral validation are sandboxes and must not write persistent championship development. This prevents exhibition/test sessions from contaminating the season.
+
+There are no hand-authored driver pace, cornering, wet-weather or aggression skill multipliers.
+
+## 7. Motor-interface constraint
+
+Sensory encoding is allowed to describe racing-relevant observations because it is explicitly the interface between the racing world and the nervous-system simulation.
+
+The downstream motor decoder is intentionally constrained. It reads neural population activity and calibration only. If a future implementation gives it direct access to hidden track geometry or a precomputed optimal driving solution, that would violate the product architecture.
+
+## 8. State policy
+
+| State | Policy |
 | --- | --- |
-| shared neural topology | frozen per software version |
+| BANC topology/source graph | frozen per pinned runtime version |
 | driver phenotype seed | persistent |
-| phenotype parameters | persistent |
-| instantaneous membrane/activity state | reset at session boot |
-| homeostatic neural gain | adaptive within a bounded session envelope |
-| constrained decoder weights | persistent within a software/model version |
-| short-timescale adaptation | adaptive, bounded |
-| championship statistics | persistent in local storage / race data |
-| constructor tuning | data-driven, bounded by technical regulations |
-| race weather/tyres/damage | reset per event |
+| phenotype/calibration parameters | persistent within championship rules |
+| instantaneous neural activity | independent per live driver; reset on fresh session boot |
+| championship development | persistent for championship sessions |
+| Quick Race / Human Test / neutral development | non-persistent sandbox |
+| race tyres/weather/damage | event/session state |
+| replay playback | recorded state only; no BANC resimulation required |
 
-## 7. Super Licence validation
+## 9. Super Licence and viability
 
-A named championship phenotype is not treated as valid merely because its seed exists.
+The neutral licence gate exists to ensure the grid remains race-capable without selecting only the fastest generated phenotypes. CI requires all 22 named championship drivers to finish and satisfy the configured minimum-competence gates.
 
-The headless neutral certification race measures:
+The separate 24-circuit smoke uses the same neural-driving contract to prove that the season geometry remains drivable by the neural system.
 
-- lap completion
-- off-track incident rate
-- collision incident rate
-- best-lap pace ratio
+## 10. Release integrity
 
-Current gates are:
+The September 17, 2026 release blocker was a source-artifact drift: the downloaded official v2 edge artifact contained **11,752,828** directed pairs while an older integrity constant expected **11,510,975**.
 
-- lap completion >= 0.96
-- off-track rate <= 0.08
-- collision rate <= 0.04
-- pace ratio >= 0.72
+The build now pins the observed v2 artifact by row count and SHA-256, generates the complete CSR payload, validates it before the race product tests, verifies the same graph again after the production Vite build, and then runs a real Chromium smoke test. The browser preview is not published if any of those gates fail.
 
-Pace is measured against the **median of the five fastest valid laps**, not the single fastest lap. This is intentional: the gate is a minimum-competence licence, not a fastest-only selection mechanism.
+## 11. Claim language
 
-The current deterministic release-candidate certification result is **22 / 22 finishers and 22 / 22 qualified phenotypes** over three laps with seed 4127. The assessment completed in 484.42 seconds and used a 125.292-second robust reference lap.
+Safe, accurate wording:
 
-CI writes an `AGP-SUPER-LICENCE/1` artifact containing the measured driver results and gate metadata.
+> AI Grand Prix uses the complete pinned BANC v888/v2 neuron-pair topology as the causal graph foundation for its browser neural drivers, with AGP-modelled neural dynamics and racing sensory/motor interfaces.
 
-## 8. Full BANC import path
-
-1. Download and version-lock BANC v888 metadata and connectivity from the published static sources.
-2. Record source URLs, hashes, sizes, schema/version and citation information in a reproducible import manifest.
-3. Identify sensory, ascending, descending, motor-related and control-relevant populations using dataset annotations.
-4. Build sparse connectivity artifacts for local compute while preserving original neuron/root identifiers.
-5. Validate that transformations preserve neuron IDs, edge directions and connection weights/counts.
-6. Build validation fixtures that compare sparse-artifact summaries against the source CSV statistics.
-7. Run the connectome engine in a worker/WASM/native local process rather than the Three.js rendering thread.
-8. Stream only neural summaries and constrained descending/readout values into the authoritative race simulation.
-9. Keep replay viewing free of connectome resimulation.
-
-Until that pipeline is active and validated, the UI must continue to label neural telemetry as `AGP_SIMULATION_INTERFACE` rather than `BANC_V888_IMPORT`.
-
-## 9. Why BANC rather than brain-only FAFB
-
-FAFB/FlyWire v783 is the adult-female whole-brain dataset. BANC extends the relevant anatomical scope to the ventral nerve cord, making it the more appropriate target for an embodied motor-control project.
-
-## 10. Product boundary today
-
-The compact neural championship is a working product system: 22 persistent neural phenotypes, constructor trade-offs, race weekends, strategy, replays, live neural telemetry and measured certification all run locally in the same application.
-
-The full BANC graph remains a **frontier integration target** because the raw biological connectivity is not bundled or executed by this release candidate. That distinction is part of the product specification, not an implementation detail to hide.
+Do not describe the product as a biologically exact living-fly simulation or claim that the racing task is a validated neuroscience experiment about natural fly behaviour.
