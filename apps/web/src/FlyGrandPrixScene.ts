@@ -60,16 +60,20 @@ const tuningFor=(id:string,neutral:boolean,round=1)=>{
   const driver=CWC_DRIVERS.find(d=>d.id===id);
   if(!driver)return undefined;const team=teamFor(driver);return constructorDevelopment(team,round).tuning;
 };
+const isPersistentChampionshipSession=(config:RaceConfig)=>config.championshipRound!=null&&['PRACTICE','QUALIFYING','SPRINT_QUALIFYING','SPRINT','GRAND_PRIX'].includes(config.session);
 
 /**
- * Championship adapter around the original visual scene.
- * The pre-connectome world, cameras, car presentation and broadcast language remain the source of truth.
- * Track geometry, entrants and simulation control are swapped beneath that presentation.
+ * Championship adapter around the premium 2027 visual scene.
+ * Quick Race, neutral tests, benchmarks and human tests are strict sandboxes: they may
+ * use the same brains and cars, but cannot write persistent driver-development state.
  */
 export class FlyGrandPrixScene extends GrandPrixScene {
+  private lastConfig:RaceConfig|null=null;
+
   override startRace(config:RaceConfig){
     const s=internal(this),trackId=config.trackId??DEFAULT_2027_TRACK_ID;
     for(const driver of s.drivers.values())if(driver instanceof PersistentDriver)driver.persist();
+    this.lastConfig={...config,gridOrder:config.gridOrder?[...config.gridOrder]:undefined};
     this.setTrack(trackId);
     s.clearCars();
     s.sceneMode=config.session==='HUMAN_TEST'?'human':'live';
@@ -80,7 +84,7 @@ export class FlyGrandPrixScene extends GrandPrixScene {
     const selected=[...pool.slice(0,requested)];
     if(s.sceneMode==='human')selected[0]=humanEntrant;
     const neutral=config.session==='NEUTRAL_TEST';
-    const persistDevelopment=!['NEUTRAL_TEST','BENCHMARK'].includes(config.session);
+    const persistDevelopment=isPersistentChampionshipSession(config);
     const states=selected.map((e,i)=>{
       const car=createCar(e.id,e.name,e.number,e.colour,i,tuningFor(e.id,neutral,config.championshipRound??1),trackId);
       if(e.id!=='human'){
@@ -101,9 +105,16 @@ export class FlyGrandPrixScene extends GrandPrixScene {
     s.focusId=selected[0].id;s.paused=false;s.updateMeshes();s.onState(s.sim.state);
   }
 
+  override restart(){
+    const s=internal(this);
+    if(s.replay){void this.loadReplay(s.replay);return;}
+    if(this.lastConfig)this.startRace(this.lastConfig);
+  }
+
   override async loadReplay(replay:ReplayFile){
     const s=internal(this),trackId=replay.trackId??DEFAULT_2027_TRACK_ID;
     for(const driver of s.drivers.values())if(driver instanceof PersistentDriver)driver.persist();
+    this.lastConfig=null;
     this.setTrack(trackId);
     s.clearCars();s.sceneMode='replay';s.replay=replay;s.replayTime=0;s.replayDuration=replay.frames.at(-1)?.t??0;s.paused=false;s.weather='CLEAR';s.applyWeather();
     const first=replay.frames[0];if(!first)throw new Error('Replay has no frames');
