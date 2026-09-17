@@ -33,16 +33,15 @@ jobs:
           d=json.loads(p.read_text())
           assert d['schema']=='BANC-V888-FULL-GRAPH/1'
           assert d['materialization']==888
-          assert d['neurons']==188162
+          assert d['neurons']==188508
           assert d['directedNeuronPairs']==11510975
-          assert d['allMetadataRowsPreserved'] is True
+          assert d['allPinnedMetadataRowsPreserved'] is True
           assert d['allV2NeuronPairsPreserved'] is True
           for name,meta in d['files'].items():
               f=p.parent/name
               assert f.exists(), name
               assert f.stat().st_size==meta['bytes'], (name,f.stat().st_size,meta['bytes'])
-          print({k:d[k] for k in ['schema','neurons','directedNeuronPairs']})
-          print('runtime bytes',sum(x['bytes'] for x in d['files'].values()))
+          print({k:d[k] for k in ['schema','neurons','directedNeuronPairs','runtimeBytes']})
           PY
       - uses: actions/upload-artifact@v4
         with:
