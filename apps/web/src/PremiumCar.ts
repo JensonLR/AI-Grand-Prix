@@ -142,7 +142,7 @@ export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
   const wheels:THREE.Mesh[]=[];
   const specs=[[-1.49,.43,2.18,true],[1.49,.43,2.18,true],[-1.51,.46,-1.88,false],[1.51,.46,-1.88,false]] as const;
   for(const [x,y,z,front] of specs){
-    const radius=front?.405:.445,width=front?.34:.405;
+    const radius=front ? .405 : .445,width=front ? .34 : .405;
     const tyre=add(g,new THREE.CylinderGeometry(radius,radius,width,lowPower?14:28),rubber,[x,y,z],[0,0,Math.PI/2]);wheels.push(tyre);
     add(g,new THREE.CylinderGeometry(radius*.67,radius*.67,width+.012,lowPower?12:24),rim,[x,y,z],[0,0,Math.PI/2]);
     add(g,new THREE.CylinderGeometry(radius*.41,radius*.41,width+.024,lowPower?10:20),brake,[x,y,z],[0,0,Math.PI/2]);
@@ -179,7 +179,7 @@ export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
   }else if(variant===8){
     for(const side of [-1,1]){add(g,new THREE.BoxGeometry(.024,.06,2.98),accent,[side*.82,.73,-.10],[0,0,-side*.10]);add(g,new THREE.BoxGeometry(.028,.14,1.18),secondary,[side*.96,.57,-1.02],[0,0,side*.20]);}
   }else if(variant===9){
-    for(const side of [-1,1]){add(g,new THREE.BoxGeometry(.030,.18,2.16),secondary,[side*.90,.61,-.22],[0,0,side*(e.number%2?.32:.25)]);add(g,new THREE.BoxGeometry(.022,.055,2.45),accent,[side*.79,.75,.03],[0,0,-side*.08]);}
+    for(const side of [-1,1]){add(g,new THREE.BoxGeometry(.030,.18,2.16),secondary,[side*.90,.61,-.22],[0,0,side*(e.number%2 ? .32 : .25)]);add(g,new THREE.BoxGeometry(.022,.055,2.45),accent,[side*.79,.75,.03],[0,0,-side*.08]);}
   }else{
     add(g,new THREE.BoxGeometry(.16,.035,3.88),secondary,[0,.96,-.08],[0,0,-.04]);for(const side of [-1,1]){add(g,new THREE.BoxGeometry(.022,.06,2.82),accent,[side*.84,.72,-.14],[0,0,side*.11]);add(g,new THREE.BoxGeometry(.020,.095,1.65),secondary,[side*.98,.55,-.67],[0,0,-side*.18]);}
   }

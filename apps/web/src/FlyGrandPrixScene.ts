@@ -6,6 +6,7 @@ import type { Control,RaceConfig,RaceState,ReplayFile,Weather } from '@agp/share
 import { GrandPrixScene,type CameraMode,type Entrant as LegacyEntrant } from './GrandPrixScene';
 import { ENTRANTS as CWC_DRIVERS,TEAMS,teamFor } from './championship';
 import { FullBancDriver } from './FullBancDriver';
+import { bancRuntime } from './BancFullRuntime';
 import { constructorDevelopment } from './constructorDevelopment';
 
 export type { CameraMode };
@@ -73,6 +74,8 @@ export class FlyGrandPrixScene extends GrandPrixScene {
   private lastConfig:RaceConfig|null=null;
 
   override startRace(config:RaceConfig){
+    const needsBanc=config.session!=='HUMAN_TEST'||config.entrants>1;
+    if(needsBanc&&bancRuntime.getInfo().status!=='ready')throw new Error('Full BANC v888 graph is not ready; refusing to start a neural race');
     const s=internal(this),trackId=config.trackId??DEFAULT_2027_TRACK_ID;
     retireDrivers(s.drivers);
     this.lastConfig={...config,gridOrder:config.gridOrder?[...config.gridOrder]:undefined};
