@@ -1,3 +1,7 @@
+export const BANC_V888_NEURONS=188508;
+export const BANC_V888_DIRECTED_PAIRS=11752828;
+export const BANC_V888_MATERIALIZATION=888;
+
 export interface BancDecisionResult{
   steering:number;throttle:number;brake:number;energyDeploy:number;activeNeurons:number;spikeRate:number;visualActivity:number;descendingActivity:number;calibration:number[];decisions:number;
 }
@@ -6,7 +10,7 @@ type WorkerReply={type:'ready';neurons:number;edges:number;materialization:numbe
 
 class BancRuntimeClient{
   private worker:Worker|null=null;private sequence=0;private pending=new Map<number,{resolve:(v:BancDecisionResult)=>void;reject:(e:Error)=>void}>();
-  private info:BancRuntimeInfo={status:'idle',neurons:0,edges:0,materialization:888,runtimeBytes:0};private listeners=new Set<(v:BancRuntimeInfo)=>void>();
+  private info:BancRuntimeInfo={status:'idle',neurons:0,edges:0,materialization:BANC_V888_MATERIALIZATION,runtimeBytes:0};private listeners=new Set<(v:BancRuntimeInfo)=>void>();
   private fail(message:string){
     const error=new Error(message);this.info={...this.info,status:'error',error:message};
     for(const pending of this.pending.values())pending.reject(error);this.pending.clear();this.emit();
@@ -22,7 +26,7 @@ class BancRuntimeClient{
   }
   private onMessage(message:WorkerReply){
     if(message.type==='ready'){
-      if(message.materialization!==888||message.neurons!==188508||message.edges!==11510975){this.fail(`BANC graph identity mismatch: v${message.materialization}, ${message.neurons} rows, ${message.edges} pairs`);return;}
+      if(message.materialization!==BANC_V888_MATERIALIZATION||message.neurons!==BANC_V888_NEURONS||message.edges!==BANC_V888_DIRECTED_PAIRS){this.fail(`BANC graph identity mismatch: v${message.materialization}, ${message.neurons} rows, ${message.edges} pairs`);return;}
       this.info={status:'ready',neurons:message.neurons,edges:message.edges,materialization:message.materialization,runtimeBytes:message.runtimeBytes};this.emit();return;
     }
     if(message.type==='error'){this.fail(message.message);return}
