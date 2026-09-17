@@ -15,6 +15,8 @@ let graphPromise:Promise<Graph>|null=null;
 const drivers=new Map<string,DriverState>();
 const MAX_FRONTIER=4200;
 const PROPAGATION_STEPS=3;
+const BANC_NEURONS=188508;
+const BANC_EDGES=11510975;
 
 const clamp=(v:number,a=0,b=1)=>Math.max(a,Math.min(b,v));
 
@@ -27,14 +29,17 @@ async function loadGraph():Promise<Graph>{
   const root=baseUrl.endsWith('/')?baseUrl:`${baseUrl}/`;
   const manifest=await getJson<BancManifest>(`${root}manifest.json`);
   if(manifest.schema!=='BANC-V888-FULL-GRAPH/1'||manifest.materialization!==888)throw new Error(`Unsupported BANC manifest ${manifest.schema}`);
+  if(manifest.neurons!==BANC_NEURONS||manifest.directedNeuronPairs!==BANC_EDGES)throw new Error(`Incomplete BANC graph: ${manifest.neurons} mapped rows / ${manifest.directedNeuronPairs} pairs`);
+  if(manifest.interface?.sensoryBuckets!==12||manifest.interface?.motorBuckets!==5)throw new Error('BANC racing interface annotation contract mismatch');
   const [offsetsRaw,targetsRaw,countsRaw,sensoryRaw,motorRaw,overflowRaw]=await Promise.all([
     getBuffer(`${root}offsets.u32`),getBuffer(`${root}targets.u32`),getBuffer(`${root}counts.u16`),
     getBuffer(`${root}sensory-buckets.u8`),getBuffer(`${root}motor-buckets.u8`),getJson<number[][]>(`${root}count-overflow.json`)
   ]);
   const offsets=new Uint32Array(offsetsRaw),targets=new Uint32Array(targetsRaw),counts=new Uint16Array(countsRaw),sensory=new Uint8Array(sensoryRaw),motor=new Uint8Array(motorRaw);
-  if(offsets.length!==manifest.neurons+1)throw new Error(`BANC offsets ${offsets.length} != ${manifest.neurons+1}`);
-  if(targets.length!==manifest.directedNeuronPairs||counts.length!==manifest.directedNeuronPairs)throw new Error('BANC edge arrays do not match manifest');
-  if(sensory.length!==manifest.neurons||motor.length!==manifest.neurons)throw new Error('BANC annotation arrays do not match manifest');
+  if(offsets.length!==BANC_NEURONS+1)throw new Error(`BANC offsets ${offsets.length} != ${BANC_NEURONS+1}`);
+  if(targets.length!==BANC_EDGES||counts.length!==BANC_EDGES)throw new Error('BANC edge arrays do not contain the complete v2 neuron-pair graph');
+  if(sensory.length!==BANC_NEURONS||motor.length!==BANC_NEURONS)throw new Error('BANC annotation arrays do not cover every mapped v888 row');
+  if(offsets[offsets.length-1]!==BANC_EDGES)throw new Error('BANC CSR terminal offset does not cover every v2 pair');
   const overflow=new Map<number,number>(overflowRaw.map(([i,count])=>[i,count]));
   return{manifest,offsets,targets,counts,sensory,motor,overflow,sensoryNodes:bucketise(sensory,12),motorNodes:bucketise(motor,5)};
 }
