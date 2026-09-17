@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './restore-agp01';
+import './quality-v4';
 import { ChampionshipApp } from './ChampionshipApp';
 import './styles.css';
 import './championship.css';
@@ -15,6 +16,7 @@ import './race-viewport.css';
 import './podium.css';
 import './final-polish.css';
 import './mobile-restoration.css';
+import './experience-v4.css';
 
 createRoot(document.getElementById('root')!).render(<StrictMode><ChampionshipApp/></StrictMode>);
 
