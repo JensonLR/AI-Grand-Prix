@@ -1,0 +1,9 @@
+/* global console */
+import {readFile,writeFile} from 'node:fs/promises';
+const path='apps/web/src/FlyGrandPrixScene.ts';let s=await readFile(path,'utf8'),before=s;
+if(!s.includes("from './PersistentDriver'"))s=s.replace("import { ENTRANTS as CWC_DRIVERS,TEAMS,teamFor } from './championship';","import { ENTRANTS as CWC_DRIVERS,TEAMS,teamFor } from './championship';\nimport { PersistentDriver } from './PersistentDriver';");
+s=s.replace("  override startRace(config:RaceConfig){\n    const s=internal(this),trackId=config.trackId??DEFAULT_2027_TRACK_ID;\n    this.setTrack(trackId);\n    s.clearCars();","  override startRace(config:RaceConfig){\n    const s=internal(this),trackId=config.trackId??DEFAULT_2027_TRACK_ID;\n    for(const driver of s.drivers.values())if(driver instanceof PersistentDriver)driver.persist();\n    this.setTrack(trackId);\n    s.clearCars();");
+s=s.replace("    const neutral=config.session==='NEUTRAL_TEST';","    const neutral=config.session==='NEUTRAL_TEST';\n    const persistDevelopment=!['NEUTRAL_TEST','BENCHMARK'].includes(config.session);");
+s=s.replace("s.drivers.set(e.id,new DeterministicDriver(e.id,e.name));","s.drivers.set(e.id,new PersistentDriver(e.id,e.name,persistDevelopment));");
+s=s.replace("  override async loadReplay(replay:ReplayFile){\n    const s=internal(this),trackId=replay.trackId??DEFAULT_2027_TRACK_ID;\n    this.setTrack(trackId);\n    s.clearCars();","  override async loadReplay(replay:ReplayFile){\n    const s=internal(this),trackId=replay.trackId??DEFAULT_2027_TRACK_ID;\n    for(const driver of s.drivers.values())if(driver instanceof PersistentDriver)driver.persist();\n    this.setTrack(trackId);\n    s.clearCars();");
+if(s!==before){await writeFile(path,s);console.log('persistent championship driver development wired')}else console.log('persistent driver already wired');
