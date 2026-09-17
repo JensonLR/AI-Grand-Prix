@@ -53,8 +53,8 @@ jobs:
         run: |
           git config user.name "AGP BANC Builder"
           git config user.email "actions@users.noreply.github.com"
-          git add apps/web/public/connectome/banc-v888-full data/connectome/banc-v888-full
+          git add -f apps/web/public/connectome/banc-v888-full data/connectome/banc-v888-full
           if ! git diff --cached --quiet; then
-            git commit -m "Persist full BANC v888 browser graph [skip ci]"
+            git commit -m "Persist full BANC v888 browser graph"
             git push origin HEAD:connectome-world-championship
           fi
