@@ -1,13 +1,13 @@
 {
-  "name": "AI Grand Prix — Connectome World Championship",
+  "name": "AI Grand Prix — 2027 Connectome World Championship",
   "short_name": "AI Grand Prix",
-  "description": "22 persistent digital fly brains, 11 constructors, one grid.",
+  "description": "2027 championship racing for 22 persistent digital fly brains across 24 circuits.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#050708",
-  "theme_color": "#073bbe",
+  "background_color": "#030609",
+  "theme_color": "#030609",
   "icons": [
     {"src":"./agp-mark.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
   ]
