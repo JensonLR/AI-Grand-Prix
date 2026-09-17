@@ -1,0 +1,32 @@
+/* V5 mobile race presentation: circuit first, broadcast information second. */
+@media (max-width:760px){
+  .screen-race .cwc-broadcast{height:100dvh!important;overflow:hidden!important}
+  .screen-race .cwc-broadcast .racebar{top:max(8px,env(safe-area-inset-top))!important;left:6px!important;right:6px!important;width:auto!important;transform:none!important;height:38px!important;border:1px solid rgba(255,255,255,.13)!important;border-radius:10px!important;background:rgba(5,8,12,.78)!important;box-shadow:0 8px 28px rgba(0,0,0,.24)!important}
+  .screen-race .cwc-broadcast .racebar .brand{width:40px!important;min-width:40px!important}
+  .screen-race .cwc-broadcast .event{padding:0 8px!important}.screen-race .cwc-broadcast .event small{font-size:6px!important;letter-spacing:.14em!important}.screen-race .cwc-broadcast .event strong{font-size:9px!important}
+  .screen-race .cwc-broadcast .flag{min-width:54px!important;font-size:7px!important;border-radius:0 9px 9px 0!important}
+
+  .screen-race .cwc-broadcast .tower{top:calc(max(8px,env(safe-area-inset-top)) + 46px)!important;left:10px!important;width:124px!important;max-height:168px!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:9px!important;background:rgba(5,8,12,.68)!important;box-shadow:0 10px 30px rgba(0,0,0,.2)!important}
+  .screen-race .cwc-broadcast .tower .driver{height:27px!important;min-height:27px!important;padding:0 6px!important;grid-template-columns:17px 3px minmax(0,1fr)!important;gap:5px!important;border-bottom:1px solid rgba(255,255,255,.055)!important}
+  .screen-race .cwc-broadcast .tower .driver>b,.screen-race .cwc-broadcast .tower .driver span strong{font-size:7px!important}
+  .screen-race .cwc-broadcast .tower .driver:nth-of-type(n+7){display:none!important}
+
+  /* Remove the desktop-style lower thirds that previously boxed the car in on a phone. */
+  .screen-race .cwc-broadcast .focus-card,.screen-race .cwc-broadcast .telemetry,.screen-race .cwc-broadcast .track-mini,.screen-race .cwc-broadcast .mini-map,.screen-race .cwc-broadcast .cwc-neural-hud,.screen-race .cwc-broadcast .cwc-fastest{display:none!important}
+
+  .screen-race .cwc-broadcast .incident{top:calc(max(8px,env(safe-area-inset-top)) + 46px)!important;right:10px!important;width:min(150px,40vw)!important;border-radius:9px!important;background:rgba(5,8,12,.76)!important;border:1px solid rgba(255,255,255,.1)!important}
+
+  /* Camera controls are one discreet glass rail, clear of the racing picture. */
+  .screen-race .cwc-broadcast .camera-bar{left:10px!important;right:10px!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;width:auto!important;height:42px!important;padding:4px!important;gap:4px!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:12px!important;background:rgba(5,8,12,.8)!important;box-shadow:0 10px 30px rgba(0,0,0,.3)!important;overflow-x:auto!important}
+  .screen-race .cwc-broadcast .camera-bar button{min-width:62px!important;min-height:32px!important;height:32px!important;border-radius:8px!important;font-size:6px!important;letter-spacing:.08em!important}
+  .screen-race .cwc-broadcast .replay-controls{left:10px!important;right:10px!important;bottom:calc(58px + env(safe-area-inset-bottom))!important}
+  .screen-race .pit-broadcast{left:10px!important;right:10px!important;bottom:calc(58px + env(safe-area-inset-bottom))!important}
+
+  .screen-race .cwc-broadcast .results,.screen-race .cwc-broadcast .results.has-podium{inset:max(8px,env(safe-area-inset-top)) 8px calc(8px + env(safe-area-inset-bottom))!important;border-radius:14px!important;background:rgba(5,8,12,.96)!important}
+  .screen-race .cwc-broadcast:has(.results) .camera-bar{display:none!important}
+}
+
+@media (max-width:430px){
+  .screen-race .cwc-broadcast .tower{width:116px!important}
+  .screen-race .cwc-broadcast .camera-bar button{min-width:58px!important}
+}
