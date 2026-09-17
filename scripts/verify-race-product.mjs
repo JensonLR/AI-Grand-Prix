@@ -1,0 +1,21 @@
+/* eslint-env node */
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8');
+const app=read('apps/web/src/ChampionshipApp.tsx'),scene=read('apps/web/src/FlyGrandPrixScene.ts'),weekend=read('apps/web/src/WeekendPanel.tsx'),main=read('apps/web/src/main.tsx'),viewport=read('apps/web/src/race-viewport.css'),banc=read('apps/web/src/FullBancDriver.ts'),worker=read('apps/web/src/BancFullWorker.ts');
+const requireText=(source,text,label)=>{if(!source.includes(text))throw new Error(`Race product contract failed: ${label}`)};
+requireText(main,"import './race-viewport.css';",'race viewport override is not loaded last');
+requireText(viewport,'.cwc-broadcast .tower','compact timing tower missing');
+requireText(viewport,'.cwc-broadcast .cwc-neural-hud{display:none','neural HUD must be opt-in');
+requireText(app,"'championship'|'quick'|'replay'|'human'",'Quick Race is not a separate mode');
+requireText(app,"raceKind!=='championship'",'standings are not championship-only');
+requireText(scene,'isPersistentChampionshipSession','persistent learning is not championship-gated');
+requireText(scene,"new FullBancDriver",'browser grid is not using FullBancDriver');
+requireText(banc,"source:'BANC_V888_FULL_GRAPH'",'BANC telemetry source missing');
+requireText(banc,'totalNeurons:188508','pinned full graph row count missing');
+requireText(banc,'graphEdges:11510975','full v2 directed pair count missing');
+requireText(worker,'PROPAGATION_STEPS=3','full graph propagation missing');
+for(const stage of ['FP1','FP2','FP3','SQ1','SQ2','SQ3','SPRINT','Q1','Q2','Q3','GRAND_PRIX'])requireText(weekend,`'${stage}'`,`weekend stage ${stage} missing`);
+requireText(app,'SPRINT_POINTS','Sprint championship points missing');
+requireText(app,"stage==='Q2'?q1Order.slice(0,15)",'Q1 knockout progression missing');
+requireText(app,"stage==='Q3'?q2Order.slice(0,10)",'Q2 knockout progression missing');
+console.log('Race product contract passed: viewport, sandbox, weekend and full-BANC wiring present.');
