@@ -100,7 +100,8 @@ try{
     if(!rect)throw new Error(`mobile ${name} is missing`);
     if(rect.left<-1||rect.right>mobileSnapshot.width+1)throw new Error(`mobile ${name} escapes viewport: ${JSON.stringify(rect)}`);
   }
-  if(mobileSnapshot.racebar.width<360)throw new Error(`mobile race ribbon is unexpectedly narrow: ${mobileSnapshot.racebar.width}`);
+  // 390px viewport with the intentional 16px shell gutters resolves to a 358px race ribbon.
+  if(mobileSnapshot.racebar.width<356)throw new Error(`mobile race ribbon is unexpectedly narrow: ${mobileSnapshot.racebar.width}`);
   if(mobileSnapshot.tower.width>170||mobileSnapshot.tower.height>215)throw new Error(`mobile timing tower obstructs too much of the race: ${JSON.stringify(mobileSnapshot.tower)}`);
   if(mobileSnapshot.visibleDrivers<5||mobileSnapshot.visibleDrivers>7)throw new Error(`mobile tower should show a concise 5–7 driver story: ${mobileSnapshot.visibleDrivers}`);
   if(mobileSnapshot.focus.top<mobileSnapshot.tower.bottom-2)throw new Error(`focus card overlaps timing tower: ${JSON.stringify(mobileSnapshot)}`);
