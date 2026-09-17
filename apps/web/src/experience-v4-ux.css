@@ -1,0 +1,32 @@
+/* Final interaction layer for Experience V4. */
+@media(max-width:760px){
+  /* Home: primary race choices first, exploration tools in a compact grid instead of a
+     seven-card vertical obstacle course. */
+  .paddock-v2{overflow:auto!important;overscroll-behavior-y:contain}
+  .paddock-grid{display:block!important;overflow:visible!important}
+  .paddock-modes{display:grid!important;grid-template-columns:1fr 1fr!important;gap:7px!important;margin-top:9px!important}
+  .paddock-mode{min-height:86px!important;padding:11px 12px!important;border-radius:11px!important}
+  .paddock-mode.primary,.paddock-mode.quick{grid-column:1/-1!important;min-height:102px!important}
+  .paddock-mode strong{font-size:14px!important;line-height:1.05!important}.paddock-mode.primary strong,.paddock-mode.quick strong{font-size:20px!important}
+  .paddock-mode small{font-size:6px!important}.paddock-mode span{font-size:7px!important;line-height:1.4!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .paddock-mode:not(.primary):not(.quick) span{display:none!important}
+  .paddock-mode b{right:10px!important;bottom:9px!important;font-size:12px!important}
+  .paddock-constructors{padding-top:9px!important}.paddock-constructors>header{position:sticky;left:0!important}.paddock-constructors>div{display:flex!important;gap:7px!important;overflow-x:auto!important;scroll-snap-type:x proximity;padding-bottom:4px!important;scrollbar-width:none}.paddock-constructors>div::-webkit-scrollbar{display:none}.paddock-constructors>div>button{flex:0 0 126px!important;min-height:56px!important;scroll-snap-align:start}
+
+  /* A viewer should not have to horizontally scroll through specialist camera modes just
+     to pause or get back to TV coverage. Keep the five useful phone controls visible. */
+  .cwc-broadcast .camera-bar button:nth-of-type(n+6){display:none!important}
+  .cwc-broadcast.camera-cockpit .camera-bar button:nth-of-type(7){display:flex!important}
+  .cwc-broadcast .camera-bar{justify-content:center!important;overflow:hidden!important}
+  .cwc-broadcast .camera-bar button{min-width:0!important;flex:1 1 20%!important;max-width:92px!important;padding:0 6px!important}
+
+  /* Replay timeline becomes an actual transport strip, not a hidden control underneath
+     telemetry. */
+  .cwc-broadcast .replay-controls{left:8px!important;right:8px!important;bottom:calc(62px + env(safe-area-inset-bottom))!important;height:38px!important;display:grid!important;grid-template-columns:35px minmax(0,1fr) 35px 38px!important;align-items:center!important;gap:5px!important;padding:4px 7px!important;border:1px solid rgba(245,239,225,.13)!important;border-radius:10px!important;background:rgba(5,8,12,.90)!important;box-shadow:0 10px 28px rgba(0,0,0,.25)!important;backdrop-filter:blur(12px)!important}
+  .cwc-broadcast .replay-controls time{font-size:6px!important;color:#9aa4ad!important}.cwc-broadcast .replay-controls input{min-width:0!important;width:100%!important;accent-color:#e0b24f}.cwc-broadcast .replay-controls button{height:28px!important;min-width:0!important;border-radius:7px!important;font-size:7px!important}
+  .cwc-broadcast:has(.replay-controls) .focus-card,.cwc-broadcast:has(.replay-controls) .telemetry{bottom:calc(108px + env(safe-area-inset-bottom))!important}
+  .cwc-broadcast:has(.replay-controls) .pit-broadcast{bottom:calc(108px + env(safe-area-inset-bottom))!important}
+
+  /* Race-complete is modal in the product sense: no race furniture bleeds through. */
+  .cwc-broadcast:has(.results) .replay-controls,.cwc-broadcast:has(.results) .pit-broadcast,.cwc-broadcast:has(.results) .start-sequence{display:none!important}
+}

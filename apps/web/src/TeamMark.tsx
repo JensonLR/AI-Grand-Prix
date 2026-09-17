@@ -1,20 +1,65 @@
 type Props={teamId:string;className?:string;title?:string};
 
-/** Original, text-free constructor marks. Deliberately abstract: aero, wing, eye, neural and flight motifs. */
+/**
+ * Bespoke constructor marks for the fly championship. Each symbol has its own silhouette,
+ * survives at 18px, and avoids borrowing a real-world motorsport logo.
+ */
 export function TeamMark({teamId,className='',title}:Props){
-  const content=(()=>{switch(teamId){
-    case 'mlarvae':return <><path d="M8 44 28 10h10L25 31h16L56 14 45 48H34l7-12H22L15 48Z"/><path d="m29 18 5-8 3 8Z" className="mark-cut"/></>;
-    case 'mercedeyes':return <><path d="M7 32c11-16 39-16 50 0-11 16-39 16-50 0Zm12 0c6 8 20 8 26 0-6-8-20-8-26 0Z"/><path d="M29 22h6v20h-6z" className="mark-cut"/></>;
-    case 'redbug':return <><path d="M6 16h22l8 10 8-10h14L43 34l12 14H40l-8-10-8 10H7l14-16Z"/><path d="M27 27h10l-5 7Z" className="mark-cut"/></>;
-    case 'flyrrari':return <><path d="M32 5 52 18v21L32 59 12 39V18Zm0 11-11 7v12l11 10 11-10V23Z"/><path d="M29 14h6v32h-6z" className="mark-cut"/></>;
-    case 'wingliams':return <><path d="M5 18h14l9 20 6-13 6 13 8-20h11L45 51H34l-6-12-6 12h-8Z"/><path d="m27 18 5-8 5 8Z" className="mark-cut"/></>;
-    case 'racingbugs':return <><path d="M10 48 27 8h10l17 40H42l-4-10H26l-4 10Zm19-20h7l-4-10Z"/><path d="M7 28h14v7H7zm36 0h14v7H43z" className="mark-cut"/></>;
-    case 'astonmidge':return <><path d="M5 34 24 13h16l19 21-15-4-12 22-12-22Zm20-10 7 12 7-12Z"/><path d="M5 39 21 43l-4 7Z" className="mark-cut"/><path d="m59 39-16 4 4 7Z" className="mark-cut"/></>;
-    case 'haasfly':return <><path d="M9 9h12v18h22V9h12v46H43V38H21v17H9Z"/><path d="m23 20 9 7 9-7v7l-9 7-9-7Z" className="mark-cut"/></>;
-    case 'audeye':return <><path d="M6 44 22 11h20l16 33H46l-4-9H22l-4 9Zm21-20-3 7h16l-3-7Z"/><path d="M29 7h6v12h-6z" className="mark-cut"/></>;
-    case 'flypine':return <><path d="m5 47 15-31 12 15 12-20 15 36H45l-4-12-9 12-9-12-4 12Z"/><path d="m25 20 7 9 7-11-7 3Z" className="mark-cut"/></>;
-    case 'caddislac':return <><path d="M8 14h48L45 26h9L39 51H25L10 26h9Zm15 12 9 14 9-14-9 5Z"/><circle cx="32" cy="16" r="5" className="mark-cut"/></>;
-    default:return <><path d="M8 32 20 12h24l12 20-12 20H20Zm15 0 9 9 9-9-9-9Z"/></>;
+  const mark=(()=>{switch(teamId){
+    case 'mlarvae': return <>
+      <path d="M8 52 24 14h14l-5 12h11l8-12h12L49 52H36l6-15H28l-6 15Z"/>
+      <path d="M25 31h25" className="mark-detail"/>
+    </>;
+    case 'mercedeyes': return <>
+      <path d="M5 36C14 21 25 14 36 14s22 7 31 22C58 51 47 58 36 58S14 51 5 36Zm13 0c6 8 11 11 18 11s12-3 18-11c-6-8-11-11-18-11s-12 3-18 11Z"/>
+      <circle cx="36" cy="36" r="7" className="mark-cut"/>
+      <path d="M36 20v32M20 36h32" className="mark-detail"/>
+    </>;
+    case 'redbug': return <>
+      <path d="M9 18h17l10 11 10-11h17L50 35l12 19H46L36 43 26 54H10l12-19Z"/>
+      <path d="M19 13 30 24M53 13 42 24" className="mark-detail"/>
+      <circle cx="36" cy="36" r="5" className="mark-cut"/>
+    </>;
+    case 'flyrrari': return <>
+      <path d="M36 5 61 17v23C61 54 51 63 36 68 21 63 11 54 11 40V17Zm0 11-14 7v16c0 8 5 14 14 18 9-4 14-10 14-18V23Z"/>
+      <path d="M28 27h16l-8 7 8 7H28l8-7Z" className="mark-cut"/>
+      <path d="M36 17v39" className="mark-detail"/>
+    </>;
+    case 'wingliams': return <>
+      <path d="M5 19h14l9 25 8-17 8 17 9-25h14L52 57H42l-6-13-6 13H20Z"/>
+      <path d="M12 14h18l6 9 6-9h18" className="mark-detail"/>
+    </>;
+    case 'racingbugs': return <>
+      <path d="M36 7 62 55H48l-5-10H29l-5 10H10Zm0 20-5 10h10Z"/>
+      <path d="M7 31h19M46 31h19M15 21l12 7M57 21l-12 7" className="mark-detail"/>
+    </>;
+    case 'astonmidge': return <>
+      <path d="M4 34 24 16h24l20 18-18-4-14 30-14-30Zm26-8 6 14 6-14Z"/>
+      <path d="M7 41 23 45M65 41 49 45" className="mark-detail"/>
+    </>;
+    case 'haasfly': return <>
+      <path d="M10 10h13v19h26V10h13v52H49V42H23v20H10Z"/>
+      <path d="M27 23 36 31l9-8v11l-9 8-9-8Z" className="mark-cut"/>
+    </>;
+    case 'audeye': return <>
+      <path d="M7 56 26 12h20l19 44H51l-5-11H26l-5 11Zm25-23h8l-4-10Z"/>
+      <path d="M14 19h13M45 19h13M36 5v15" className="mark-detail"/>
+    </>;
+    case 'flypine': return <>
+      <path d="M5 56 22 15l14 18 14-23 17 46H52l-5-17-11 16-11-16-5 17Z"/>
+      <path d="m27 26 9 10 9-13" className="mark-cut"/>
+      <path d="M14 59h44" className="mark-detail"/>
+    </>;
+    case 'caddislac': return <>
+      <path d="M8 15h56L52 29h8L44 58H28L12 29h8Zm17 14 11 17 11-17-11 7Z"/>
+      <path d="M18 21h36M36 7v13" className="mark-detail"/>
+      <circle cx="36" cy="14" r="4" className="mark-cut"/>
+    </>;
+    default: return <>
+      <path d="M8 36 22 12h28l14 24-14 24H22Zm17 0 11 11 11-11-11-11Z"/>
+    </>;
   }})()
-  return <svg className={`team-mark ${className}`} viewBox="0 0 64 64" role={title?'img':'presentation'} aria-label={title}><g fill="currentColor">{content}</g></svg>
+  return <svg className={`team-mark team-mark-${teamId} ${className}`} viewBox="0 0 72 72" role={title?'img':'presentation'} aria-label={title}>
+    <g className="mark-fill" fill="currentColor">{mark}</g>
+  </svg>
 }
