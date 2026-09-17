@@ -16,6 +16,7 @@ import './final-polish.css';
 
 createRoot(document.getElementById('root')!).render(<StrictMode><ChampionshipApp/></StrictMode>);
 
-if(import.meta.env.PROD&&'serviceWorker' in navigator){
+const hosted=location.protocol==='https:'||(location.protocol==='http:'&&!['localhost','127.0.0.1'].includes(location.hostname));
+if(hosted&&'serviceWorker' in navigator){
   addEventListener('load',()=>{void navigator.serviceWorker.register(new URL('sw.js',document.baseURI)).catch(()=>undefined)},{once:true});
 }
