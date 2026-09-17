@@ -14,7 +14,7 @@ export class ChampionshipRaceSimulation extends RaceSimulation {
       if(pit?.phase==='ENTRY'){throttle=Math.min(throttle,.34);if(car.speed>22)brake=Math.max(brake,.52);if(car.progress>.982||car.progress<.018){pit.phase='STOP';pit.timer=0;pit.stopX=car.x;pit.stopZ=car.z;}}
       if(pit?.phase==='STOP'){throttle=0;brake=1;}if(pit?.phase==='EXIT'){throttle=Math.min(throttle,.55);if(car.speed>25)brake=Math.max(brake,.3);}
       if(this.state.flag==='YELLOW')throttle=Math.min(throttle,.72);if(this.state.flag==='VSC'){throttle=Math.min(throttle,.42);if(car.speed>38)brake=Math.max(brake,.24);}
-      if(this.state.flag==='SAFETY_CAR'){const index=ordered.findIndex(c=>c.id===car.id),ahead=index>0?ordered[index-1]:null,target=index===0?28:30;throttle=Math.min(throttle,car.speed<target?.38:.12);if(car.speed>target+1)brake=Math.max(brake,.34);if(ahead){let gap=(ahead.lap+ahead.progress)-(car.lap+car.progress);if(gap<0)gap+=1;if(gap<.010){throttle=Math.min(throttle,.08);if(car.speed>Math.max(12,ahead.speed-1))brake=Math.max(brake,.44);}}}
+      if(this.state.flag==='SAFETY_CAR'){const index=ordered.findIndex(c=>c.id===car.id),ahead=index>0?ordered[index-1]:null,target=index===0?28:30;throttle=Math.min(throttle,car.speed<target ? .38 : .12);if(car.speed>target+1)brake=Math.max(brake,.34);if(ahead){let gap=(ahead.lap+ahead.progress)-(car.lap+car.progress);if(gap<0)gap+=1;if(gap<.010){throttle=Math.min(throttle,.08);if(car.speed>Math.max(12,ahead.speed-1))brake=Math.max(brake,.44);}}}
       if(this.state.flag==='RED'){throttle=0;brake=1;}strategic.set(car.id,{...raw,throttle,brake});
     }
     super.step(strategic,dt);
