@@ -1,7 +1,7 @@
 /* eslint-env node */
 import fs from 'node:fs';
 const read=p=>fs.readFileSync(p,'utf8');
-const app=read('apps/web/src/ChampionshipApp.tsx'),scene=read('apps/web/src/FlyGrandPrixScene.ts'),weekend=read('apps/web/src/WeekendPanel.tsx'),main=read('apps/web/src/main.tsx'),viewport=read('apps/web/src/race-viewport.css'),banc=read('apps/web/src/FullBancDriver.ts'),worker=read('apps/web/src/BancFullWorker.ts');
+const app=read('apps/web/src/ChampionshipApp.tsx'),scene=read('apps/web/src/FlyGrandPrixScene.ts'),weekend=read('apps/web/src/WeekendPanel.tsx'),main=read('apps/web/src/main.tsx'),viewport=read('apps/web/src/race-viewport.css'),banc=read('apps/web/src/FullBancDriver.ts'),runtime=read('apps/web/src/BancFullRuntime.ts'),worker=read('apps/web/src/BancFullWorker.ts');
 const requireText=(source,text,label)=>{if(!source.includes(text))throw new Error(`Race product contract failed: ${label}`)};
 requireText(main,"import './race-viewport.css';",'race viewport override is not loaded last');
 requireText(viewport,'.cwc-broadcast .tower','compact timing tower missing');
@@ -11,11 +11,16 @@ requireText(app,"raceKind!=='championship'",'standings are not championship-only
 requireText(scene,'isPersistentChampionshipSession','persistent learning is not championship-gated');
 requireText(scene,"new FullBancDriver",'browser grid is not using FullBancDriver');
 requireText(banc,"source:'BANC_V888_FULL_GRAPH'",'BANC telemetry source missing');
-requireText(banc,'totalNeurons:188508','pinned full graph row count missing');
-requireText(banc,'graphEdges:11510975','full v2 directed pair count missing');
+requireText(banc,'BANC_V888_NEURONS','driver is not bound to the verified full-graph row identity');
+requireText(banc,'BANC_V888_DIRECTED_PAIRS','driver is not bound to the verified full-graph edge identity');
+requireText(banc,'totalNeurons:graph.neurons','telemetry is not reporting verified runtime rows');
+requireText(banc,'graphEdges:graph.edges','telemetry is not reporting verified runtime pairs');
+requireText(runtime,'BANC_V888_NEURONS=188508','pinned full graph row count missing');
+requireText(runtime,'BANC_V888_DIRECTED_PAIRS=11752828','pinned full v2 directed pair count missing');
+requireText(runtime,"message.edges!==BANC_V888_DIRECTED_PAIRS",'worker readiness does not reject a graph edge mismatch');
 requireText(worker,'PROPAGATION_STEPS=3','full graph propagation missing');
 for(const stage of ['FP1','FP2','FP3','SQ1','SQ2','SQ3','SPRINT','Q1','Q2','Q3','GRAND_PRIX'])requireText(weekend,`'${stage}'`,`weekend stage ${stage} missing`);
 requireText(app,'SPRINT_POINTS','Sprint championship points missing');
 requireText(app,"stage==='Q2'?q1Order.slice(0,15)",'Q1 knockout progression missing');
 requireText(app,"stage==='Q3'?q2Order.slice(0,10)",'Q2 knockout progression missing');
-console.log('Race product contract passed: viewport, sandbox, weekend and full-BANC wiring present.');
+console.log('Race product contract passed: viewport, sandbox, weekend and verified full-BANC wiring present.');
