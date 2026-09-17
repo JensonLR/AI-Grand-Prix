@@ -32,6 +32,8 @@ jobs:
         run: node scripts/patch-premium-weather.mjs
       - name: Apply 2027 season-first product shell
         run: node scripts/patch-product-v2.mjs
+      - name: Verify visible 2027 product shell
+        run: node scripts/verify-product-v2.mjs
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
