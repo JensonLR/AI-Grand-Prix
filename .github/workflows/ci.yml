@@ -38,12 +38,16 @@ jobs:
         run: node scripts/patch-banc-full-ui.mjs
       - name: Apply hard full-BANC runtime readiness gate
         run: node scripts/patch-banc-readiness.mjs
+      - name: Apply crash-safe browser attract boot
+        run: node scripts/patch-safe-browser-boot.mjs
       - name: Verify complete BANC v888 browser graph
         run: node scripts/verify-banc-runtime.mjs
       - name: Verify visible 2027 product shell
         run: node scripts/verify-product-v2.mjs
       - name: Verify race product contract
         run: node scripts/verify-race-product.mjs
+      - name: Verify browser boot contract
+        run: node scripts/verify-browser-boot.mjs
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
