@@ -63,6 +63,8 @@ jobs:
           path: data/races/latest.agpr.json
           if-no-files-found: warn
       - run: npm run build
+      - name: Verify full BANC graph survived production build
+        run: BANC_ROOT=apps/web/dist/connectome/banc-v888-full node scripts/verify-banc-runtime.mjs
       - name: Upload browser preview
         if: success()
         uses: actions/upload-artifact@v4
