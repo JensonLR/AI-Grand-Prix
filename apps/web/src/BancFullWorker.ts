@@ -17,7 +17,6 @@ const MAX_FRONTIER=4200;
 const PROPAGATION_STEPS=3;
 
 const clamp=(v:number,a=0,b=1)=>Math.max(a,Math.min(b,v));
-const hash=(text:string)=>{let h=2166136261>>>0;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h||1};
 
 async function getBuffer(url:string){const r=await fetch(url);if(!r.ok)throw new Error(`BANC asset ${r.status}: ${url}`);return r.arrayBuffer();}
 async function getJson<T>(url:string):Promise<T>{const r=await fetch(url);if(!r.ok)throw new Error(`BANC asset ${r.status}: ${url}`);return r.json() as Promise<T>}
