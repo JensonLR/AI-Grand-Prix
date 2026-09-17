@@ -1,3 +1,4 @@
+/* global console */
 import { readFile,writeFile } from 'node:fs/promises';
 
 async function patch(path,fn){const before=await readFile(path,'utf8'),after=fn(before);if(after!==before){await writeFile(path,after);console.log(`patched ${path}`)}else console.log(`already current ${path}`)}
@@ -9,6 +10,8 @@ await patch('apps/web/src/PremiumCar.ts',s=>s
   .replaceAll('front?.17:.19','front ? .17 : .19')
   .replaceAll('front?.285:.305','front ? .285 : .305')
   .replaceAll('front?.34:.38','front ? .34 : .38')
+  .replace('  const tub=addMesh(g,new THREE.CapsuleGeometry(.57,2.5,lowPower?6:10,lowPower?12:22),body,[0,.54,-.15],[Math.PI/2,0,0],[1,.92,1.12]);','  addMesh(g,new THREE.CapsuleGeometry(.57,2.5,lowPower?6:10,lowPower?12:22),body,[0,.54,-.15],[Math.PI/2,0,0],[1,.92,1.12]);')
+  .replace('  const engine=addMesh(g,new THREE.CapsuleGeometry(.48,1.55,lowPower?5:9,lowPower?10:20),body,[0,.73,-1.55],[Math.PI/2,0,0],[1,.86,1]);','  addMesh(g,new THREE.CapsuleGeometry(.48,1.55,lowPower?5:9,lowPower?10:20),body,[0,.73,-1.55],[Math.PI/2,0,0],[1,.86,1]);')
 );
 
 await patch('apps/web/src/GrandPrixScene.ts',s=>{
