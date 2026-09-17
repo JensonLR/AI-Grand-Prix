@@ -1,0 +1,29 @@
+/* global console */
+import {readFile,writeFile} from 'node:fs/promises';
+async function patch(path,fn){const before=await readFile(path,'utf8'),after=fn(before);if(after!==before){await writeFile(path,after);console.log(`patched ${path}`)}else console.log(`already current ${path}`)}
+
+await patch('apps/web/src/PremiumCar.ts',s=>{
+  if(s.includes('g.userData.spray'))return s;
+  const old=`  const rain=addMesh(g,new THREE.BoxGeometry(.28,.10,.055),new THREE.MeshStandardMaterial({color:'#f32626',emissive:'#f32626',emissiveIntensity:3.2}),[0,.55,-2.98]);\n  g.userData.rainLight=rain;g.userData.wheels=wheels;g.userData.premiumCar=true;g.userData.team=e.provider;g.userData.variant=variant;`;
+  const fresh=`  const sprayMaterial=new THREE.MeshBasicMaterial({color:'#e9f2f6',transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide});\n  const sprays=[-1,1].map(side=>addMesh(g,new THREE.ConeGeometry(.24,1.55,lowPower?5:8,1,true),sprayMaterial.clone(),[side*1.22,.35,-2.48],[-Math.PI/2,0,0],[1,1,1]));\n  sprays.forEach(x=>{x.visible=false;x.renderOrder=2;});\n  const rain=addMesh(g,new THREE.BoxGeometry(.28,.10,.055),new THREE.MeshStandardMaterial({color:'#f32626',emissive:'#f32626',emissiveIntensity:3.2}),[0,.55,-2.98]);\n  g.userData.rainLight=rain;g.userData.wheels=wheels;g.userData.spray=sprays;g.userData.premiumCar=true;g.userData.team=e.provider;g.userData.variant=variant;`;
+  return s.replace(old,fresh);
+});
+
+await patch('apps/web/src/GrandPrixScene.ts',s=>{
+  if(!s.includes("from './PremiumWeather'"))s=s.replace("import { PremiumRaceAudio } from './PremiumAudio';","import { PremiumRaceAudio } from './PremiumAudio';\nimport { PremiumWeather } from './PremiumWeather';");
+  if(!s.includes('private premiumWeather!:PremiumWeather;'))s=s.replace('private raceAudio=new PremiumRaceAudio();','private raceAudio=new PremiumRaceAudio();private premiumWeather!:PremiumWeather;');
+  s=s.replace('this.resize();this.buildWorld();this.startRace(', 'this.resize();this.premiumWeather=new PremiumWeather(this.scene,this.lowPower);this.buildWorld();this.startRace(');
+  const weatherOld="private applyWeather(){this.scene.fog=new THREE.FogExp2(this.weather==='RAIN'?'#60758a':this.weather==='OVERCAST'?'#8296a9':'#6e9cdf',this.weather==='RAIN'?.0032:.00145);this.renderer.toneMappingExposure=this.weather==='RAIN'?.83:this.weather==='OVERCAST'?.98:1.16;}";
+  const weatherNew="private applyWeather(){const heavy=this.weather==='HEAVY_RAIN'||this.weather==='RAIN',light=this.weather==='LIGHT_RAIN'||this.weather==='DRYING',cloud=this.weather==='OVERCAST'||this.weather==='CLOUDY';this.scene.fog=new THREE.FogExp2(heavy?'#5f7487':light?'#758ba0':cloud?'#8296a9':'#6e9cdf',heavy?.0035:light?.00225:cloud?.00185:.00145);this.renderer.toneMappingExposure=heavy?.79:light?.91:cloud?.98:1.16;this.premiumWeather?.setWeather(this.weather);}";
+  s=s.replace(weatherOld,weatherNew).replaceAll('heavy?.0035','heavy ? .0035').replaceAll('light?.00225','light ? .00225').replaceAll('cloud?.00185','cloud ? .00185').replaceAll('heavy?.79','heavy ? .79').replaceAll('light?.91','light ? .91').replaceAll('cloud?.98','cloud ? .98');
+  const animOld="private animateWorld(t:number){this.clouds.forEach((c,i)=>{c.position.x+=.002*(i%3+1);c.rotation.y=Math.sin(t*.015+i)*.02;});this.water.rotation.z=Math.sin(t*.07)*.002;const car=this.sim.state.cars.find(c=>c.id===this.focusId),slip=car?.tyres.reduce((n,x)=>n+Math.abs(x.slipAngle)+Math.abs(x.slipRatio),0)??0;this.raceAudio.update(car?.speed??0,car?.controls.throttle??0,this.sim.state.wetness,this.paused,car?.neural?.spikeRate??0,slip*.12);}";
+  const animNew="private animateWorld(t:number){this.clouds.forEach((c,i)=>{c.position.x+=.002*(i%3+1);c.rotation.y=Math.sin(t*.015+i)*.02;});this.water.rotation.z=Math.sin(t*.07)*.002;this.premiumWeather.update(t,this.camera);const car=this.sim.state.cars.find(c=>c.id===this.focusId),slip=car?.tyres.reduce((n,x)=>n+Math.abs(x.slipAngle)+Math.abs(x.slipRatio),0)??0;this.raceAudio.update(car?.speed??0,car?.controls.throttle??0,this.sim.state.wetness,this.paused,car?.neural?.spikeRate??0,slip*.12);}";
+  s=s.replace(animOld,animNew);
+  const meshOld="private updateMeshes(){for(const s of this.sim.state.cars){const g=this.cars.get(s.id);if(!g)continue;g.position.set(s.x,.72,s.z);g.rotation.y=s.yaw;const wheels=g.userData.wheels as THREE.Mesh[];wheels.forEach((w,i)=>{w.rotation.x-=s.speed*FIXED_DT/.38;if(i<2)w.rotation.y=s.controls.steering*.35;});const rain=g.userData.rainLight as THREE.Mesh|undefined;if(rain)(rain.material as THREE.MeshStandardMaterial).emissiveIntensity=1.5+Math.sin(this.sim.state.time*12)*1.2;}}";
+  const meshNew="private updateMeshes(){for(const s of this.sim.state.cars){const g=this.cars.get(s.id);if(!g)continue;g.position.set(s.x,.72,s.z);g.rotation.y=s.yaw;const wheels=g.userData.wheels as THREE.Mesh[];wheels.forEach((w,i)=>{w.rotation.x-=s.speed*FIXED_DT/.38;if(i<2)w.rotation.y=s.controls.steering*.35;});const rain=g.userData.rainLight as THREE.Mesh|undefined;if(rain)(rain.material as THREE.MeshStandardMaterial).emissiveIntensity=1.5+Math.sin(this.sim.state.time*12)*1.2;const spray=(g.userData.spray??[]) as THREE.Mesh[],sprayPower=this.sim.state.wetness*Math.min(1,s.speed/45);spray.forEach((m,i)=>{m.visible=sprayPower>.035;m.scale.set(1+sprayPower*.9,1+sprayPower*2.2,1+sprayPower*.8);m.rotation.z=(i?-.08:.08)+Math.sin(this.sim.state.time*9+i)*.025;(m.material as THREE.MeshBasicMaterial).opacity=.05+sprayPower*.22;});}}";
+  s=s.replace(meshOld,meshNew);
+  s=s.replace('this.raceAudio.dispose();this.clearCars();','this.raceAudio.dispose();this.premiumWeather.dispose();this.clearCars();');
+  return s;
+});
+
+await patch('apps/web/src/ChampionshipApp.tsx',s=>s.replace("(['CLEAR','OVERCAST','RAIN'] as Weather[])","(['CLEAR','CLOUDY','LIGHT_RAIN','HEAVY_RAIN','DRYING'] as Weather[])"));
