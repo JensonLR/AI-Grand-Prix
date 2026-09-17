@@ -56,10 +56,10 @@ export class PremiumPitLane{
       rig.people.forEach((person,index)=>{
         const pulse=active?Math.sin(time*12+index*.8):Math.sin(time*1.4+index)*.05;
         person.rotation.x=active&&phase<3.2?(index<4?-.34-Math.abs(pulse)*.18:.08*pulse):0;
+        person.rotation.y=active?Math.sin(time*7+index)*.035:Math.sin(time*.7+index)*.012;
         person.position.y=active?Math.max(0,.03+Math.abs(pulse)*.045):0;
-        person.position.z+=(active?Math.sin(time*8+index)*.0015:0);
       });
-      rig.wheels.forEach((wheel,index)=>{wheel.rotation.x=active?time*(index%2?8:-8):Math.PI/2;wheel.position.y=active&&phase<3.2?.28+.06*Math.sin(time*13+index):.36;});
+      rig.wheels.forEach((wheel,index)=>{wheel.rotation.x=active?time*(index%2?8:-8):0;wheel.rotation.y=Math.PI/2;wheel.position.y=active&&phase<3.2?.28+.06*Math.sin(time*13+index):.36;});
       rig.jack.rotation.x=active&&phase>.55&&phase<3.05?-.12:0;
       rig.root.scale.setScalar(active?1.025:1);
     }
