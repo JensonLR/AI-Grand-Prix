@@ -36,6 +36,10 @@ jobs:
         run: node scripts/patch-weekend-v3.mjs
       - name: Apply full BANC v888 UI contract
         run: node scripts/patch-banc-full-ui.mjs
+      - name: Apply hard full-BANC runtime readiness gate
+        run: node scripts/patch-banc-readiness.mjs
+      - name: Verify complete BANC v888 browser graph
+        run: node scripts/verify-banc-runtime.mjs
       - name: Verify visible 2027 product shell
         run: node scripts/verify-product-v2.mjs
       - name: Verify race product contract
