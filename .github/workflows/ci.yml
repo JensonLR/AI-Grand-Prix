@@ -41,6 +41,8 @@ jobs:
         run: npm run season-smoke
       - name: Certify the 22-driver neutral grid
         run: npm run race
+      - name: Generate public Round 1 Bahrain replay
+        run: npm run season-replay
       - name: Upload race diagnostics
         if: always()
         uses: actions/upload-artifact@v4
@@ -63,7 +65,7 @@ jobs:
         run: |
           git config user.name "AGP CI"
           git config user.email "actions@users.noreply.github.com"
-          git add packages/sim-core/src/index.ts packages/sim-core/src/generated/season2027.ts packages/driver-sdk/src/index.ts apps/web/src/FlyGrandPrixScene.ts apps/web/src/PersistentDriver.ts apps/web/src/constructorDevelopment.ts apps/web/src/GrandPrixScene.ts apps/web/src/ChampionshipApp.tsx apps/web/src/SeasonCalendar.tsx apps/web/src/WeekendPanel.tsx apps/web/src/main.tsx apps/web/src/PremiumCar.ts apps/web/src/PremiumCircuit.ts apps/web/src/PremiumAudio.ts apps/web/src/PremiumWeather.ts apps/web/src/PremiumWorld.ts apps/web/src/TeamMark.tsx apps/web/src/ChampionshipBrand.tsx apps/web/src/CircuitSilhouette.tsx apps/web/src/Opening2027.tsx apps/web/src/PaddockHome.tsx apps/web/src/premium.css apps/web/src/constructor-marks.css apps/web/src/development.css apps/web/src/product-v2.css apps/web/public/tracks/season2027.json
+          git add packages/sim-core/src/index.ts packages/sim-core/src/generated/season2027.ts packages/driver-sdk/src/index.ts apps/web/src/FlyGrandPrixScene.ts apps/web/src/PersistentDriver.ts apps/web/src/constructorDevelopment.ts apps/web/src/GrandPrixScene.ts apps/web/src/ChampionshipApp.tsx apps/web/src/SeasonCalendar.tsx apps/web/src/WeekendPanel.tsx apps/web/src/main.tsx apps/web/src/PremiumCar.ts apps/web/src/PremiumCircuit.ts apps/web/src/PremiumAudio.ts apps/web/src/PremiumWeather.ts apps/web/src/PremiumWorld.ts apps/web/src/TeamMark.tsx apps/web/src/ChampionshipBrand.tsx apps/web/src/CircuitSilhouette.tsx apps/web/src/Opening2027.tsx apps/web/src/PaddockHome.tsx apps/web/src/premium.css apps/web/src/constructor-marks.css apps/web/src/development.css apps/web/src/product-v2.css apps/web/public/tracks/season2027.json apps/web/public/replays/demo.agpr.json
           if ! git diff --cached --quiet; then
             git commit -m "Persist validated 2027 product shell [skip ci]"
             git push origin HEAD:connectome-world-championship || echo "A newer championship commit exists; source persistence deferred to its validation run."
