@@ -11,7 +11,8 @@
     "test": "vitest run",
     "lint": "eslint .",
     "race": "tsx apps/race-runner/src/index.ts",
-    "season-smoke": "tsx apps/race-runner/src/season-smoke.ts"
+    "season-smoke": "tsx apps/race-runner/src/season-smoke.ts",
+    "season-replay": "tsx apps/race-runner/src/season-demo.ts"
   },
   "devDependencies": {
     "@eslint/js": "9.35.0",
