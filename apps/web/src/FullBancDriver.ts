@@ -1,5 +1,5 @@
-import { DeterministicDriver,hashSeed,type DriverDecision,type DriverObservation } from '@agp/driver-sdk';
-import type { DriverDevelopmentState,NeuralTelemetry,TyreCompound } from '@agp/shared';
+import { DeterministicDriver,hashSeed,type DriverDecision,type DriverDevelopmentState,type DriverObservation } from '@agp/driver-sdk';
+import type { NeuralTelemetry,TyreCompound } from '@agp/shared';
 import { bancRuntime } from './BancFullRuntime';
 
 const STORAGE='agp:cwc:banc-v888-development:v1:';
@@ -11,7 +11,7 @@ export class FullBancDriver extends DeterministicDriver{
   private readonly runtimeKey:string;private readonly seed:number;private decisions=0;private calibration=[0,0,0,0,0];private pending:Promise<DriverDecision>|null=null;
   constructor(id:string,name:string,private persistAcrossEvents=true){
     super(id,name);this.seed=hashSeed(id);this.runtimeKey=`${id}:${++instanceSequence}:${this.seed}`;
-    if(persistAcrossEvents&&typeof localStorage!=='undefined')try{const raw=localStorage.getItem(STORAGE+id);if(raw){const parsed=JSON.parse(raw) as DriverDevelopmentState;if(parsed.version===1&&Array.isArray(parsed.readoutCalibration))this.calibration=parsed.readoutCalibration.slice(0,5).map(v=>Number(v)||0);}}catch(error){void error;}
+    if(persistAcrossEvents&&typeof localStorage!=='undefined')try{const raw=localStorage.getItem(STORAGE+id);if(raw){const parsed=JSON.parse(raw) as DriverDevelopmentState;if(parsed.version===1&&Array.isArray(parsed.readoutCalibration)){this.decisions=Math.max(0,Math.floor(parsed.exposureDecisions||0));this.calibration=parsed.readoutCalibration.slice(0,5).map(v=>Number(v)||0);}}}catch(error){void error;}
   }
   private sensors(o:DriverObservation){
     const near=o.track[2]?.headingDelta??0,mid=o.track[5]?.headingDelta??0,far=o.track[7]?.headingDelta??0,leftBoundary=o.track[0]?.leftBoundary??6,rightBoundary=o.track[0]?.rightBoundary??6,leftEdge=clamp((2.4-leftBoundary)/2.4),rightEdge=clamp((2.4-rightBoundary)/2.4);
