@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Build AGP's compact sensorimotor projection from pinned BANC v888 paper data.
+"""Build AGP's compact sensorimotor projection from BANC v888 data.
 
-Metadata is pinned to the version-of-record BANC-project commit instead of the mutable GCS
-metadata object. Connectivity remains the paper v2 edgelist and is accepted only if its
-published byte size and row count match exactly. The output never claims to be the full
-connectome runtime; it is a provenance-rich population projection derived only from observed
-BANC edges.
+Metadata is pinned to the version-of-record BANC-project commit. Connectivity uses the
+current public v888/v2 object from the project bucket because the mutable GCS mirror has
+been repacked since the paper deposit; we therefore verify its exact observed byte size,
+exact paper row count and schema, then record a SHA-256 in the derived artifact. The output
+never claims to be the full connectome runtime: it is a provenance-rich population projection
+derived only from observed BANC edges.
 """
 from __future__ import annotations
 import hashlib,json,re,urllib.request
@@ -30,8 +31,8 @@ META={
 EDGES={
  'name':'banc_888_edgelist_simple_v2.feather',
  'url':'https://storage.googleapis.com/lee-lab_brain-and-nerve-cord-fly-connectome/compiled_data/banc_888/banc_888_edgelist_simple_v2.feather',
- 'size':298465650,'rows':11510975,
- 'provenance':'BANC v888 paper v2 neuron-to-neuron edgelist; size>=5 source synapse model'
+ 'size':305250378,'rows':11510975,
+ 'provenance':'BANC public GCS materialization v888 / synapse model v2 object observed 2026-09-17; mutable mirror, SHA-256 recorded in output'
 }
 CORE={'sensory','sensory_ascending','sensory_descending','ascending','descending','motor','visual_projection'}
 
@@ -80,6 +81,8 @@ def main():
  for pid,g in core.groupby('population_id',sort=True):
   r=g.iloc[0];popmeta[pid]={'id':pid,'role':r.role,'superClass':clean(r.super_class),'label':clean(r.detail),'neuronCount':int(len(g)),'regions':sorted(x for x in {clean(v) for v in g.region} if x),'flows':sorted(x for x in {clean(v) for v in g.flow} if x)}
  print(f'Selected {len(core):,} neurons into {len(popmeta):,} populations',flush=True)
+ edge_schema=feather.read_table(ep,columns=['pre','post','count']).schema
+ if set(edge_schema.names)!={'pre','post','count'}:raise RuntimeError(f'unexpected edge schema {edge_schema.names}')
  tab=feather.read_table(ep,columns=['pre','post','count'])
  if tab.num_rows!=EDGES['rows']:raise RuntimeError(f"edgelist row mismatch {tab.num_rows} != {EDGES['rows']}")
  tab=tab.filter(pc.greater_equal(tab['count'],5));thresholded=tab.num_rows;edges=tab.to_pandas();edges['pre']=edges.pre.astype(str);edges['post']=edges.post.astype(str);edges['source']=edges.pre.map(idpop);edges['target']=edges.post.map(idpop);edges.dropna(subset=['source','target'],inplace=True);edges=edges[edges.source!=edges.target]
