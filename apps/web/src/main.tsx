@@ -9,5 +9,6 @@ import './season.css';
 import './premium.css';
 import './constructor-marks.css';
 import './development.css';
+import './product-v2.css';
 
 createRoot(document.getElementById('root')!).render(<StrictMode><ChampionshipApp/></StrictMode>);
