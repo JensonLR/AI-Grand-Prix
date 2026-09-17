@@ -54,7 +54,7 @@ class BancRuntimeClient{
     return new Promise<BancDecisionResult>((resolve,reject)=>{this.pending.set(requestId,{resolve,reject});worker.postMessage({type:'decide',requestId,driverKey,seed,sensors,calibration})});
   }
   disposeDriver(driverKey:string){this.worker?.postMessage({type:'dispose',driverKey})}
-  subscribe(listener:(v:BancRuntimeInfo)=>void){this.listeners.add(listener);listener(this.getInfo());return()=>this.listeners.delete(listener)}
+  subscribe(listener:(v:BancRuntimeInfo)=>void){this.listeners.add(listener);listener(this.getInfo());return()=>{this.listeners.delete(listener);}}
   getInfo(){return{...this.info}}
 }
 
