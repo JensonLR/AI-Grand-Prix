@@ -2,7 +2,7 @@
 
 Updated: 2026-09-17
 
-Status: **full-BANC 2027 browser release validated and publishable**
+Status: **full-BANC 2027 browser release complete, validated and published**
 
 ## Locked product
 
@@ -14,16 +14,19 @@ Status: **full-BANC 2027 browser release validated and publishable**
 - Development branch: `connectome-world-championship`
 - Tested publication branch: `browser-preview`
 
-## Crashed-chat release blockers — resolved
+## Release blockers — resolved
 
-The final outstanding release work from the previous build session is complete:
+The outstanding release work from the previous build sessions is complete:
 
 1. **BANC integrity drift fixed** — the pinned official public v2 artifact contains **11,752,828** directed neuron pairs, replacing the stale 11,510,975 expectation.
 2. **Complete browser graph generated and committed** — **188,508** mapped BANC rows and all **11,752,828** directed pairs are represented in the sparse runtime assets.
 3. **Hard runtime-readiness gate active** — a neural race refuses to start unless the full graph identity and array contract validate.
 4. **Production graph verification active** — CI checks the graph before product tests and again after the Vite production copy.
 5. **Real browser release smoke active** — Chromium must render the production cars and report the full BANC runtime identity.
-6. **Tested browser build republished** — successful CI publishes the production artifact to `browser-preview`.
+6. **Tested browser build published** — successful CI publishes the production artifact to `browser-preview`.
+7. **Final presentation pass complete** — automated television direction, incident review direction, pit-stop broadcast graphics, animated track-anchored 3D pit crews and a full podium ceremony are integrated into the race product.
+8. **Constructor visual pass complete** — all eleven spoof constructors use distinct livery/signature treatments, generated identifiers and premium AGP-27 car presentation.
+9. **Mobile/browser optimisation pass complete** — React, Three.js and remaining vendor dependencies are split into stable chunks, low-power rendering paths remain active and hosted builds use the runtime/service-worker cache path.
 
 ## BANC runtime identity
 
@@ -73,13 +76,26 @@ All 22 drivers share the same graph topology but maintain independent seeded phe
 
 - premium Three.js race scene
 - AGP-27 / AGP-01 race-car asset path with procedural fallback
-- original constructor marks and livery palettes
+- eleven distinct original constructor marks, livery palettes and signature treatments
 - selected-circuit world rendering
 - broadcast, trackside, chase, cockpit/T-cam, aerial and neural camera modes
+- deterministic AUTO TV director prioritising incidents, pit stops, close battles, final-lap action and the winner
+- incident-review broadcast cues
+- animated pit-stop broadcast package with BOX / SERVICE / RELEASE phases and stop timing
+- track-anchored 3D pit lane with animated team-coloured crews, wheels and jacks
+- race-complete podium ceremony with trophy, top-three presentation and confetti
 - wet-weather spray and race audio
 - desktop/mobile responsive product shell
 - touch Human Test controls
-- installable web-app manifest
+- installable web-app manifest and hosted runtime cache
+
+### Performance
+
+- React, Three.js and common vendor dependencies are split into stable production chunks
+- reduced rendering path is selected for small screens / reduced-motion environments
+- renderer pixel ratio and antialiasing are bounded on low-power devices
+- full BANC execution stays off the UI thread in a Web Worker
+- service-worker/runtime cache is enabled only for hosted browser environments
 
 ### Validation
 
@@ -92,7 +108,7 @@ A green release run verifies:
 - lint
 - TypeScript/typecheck
 - automated tests
-- 24 / 24 neural circuit drivability
+- 24 / 24 circuit neural drivability
 - 22 / 22 neutral Super Licence certification
 - public Bahrain replay generation
 - production build
@@ -108,11 +124,6 @@ Do not claim biophysical completeness. BANC connectivity is source data; racing 
 
 ## Remaining work
 
-There is no remaining blocker from the crashed release session. Further work is optional product/presentation expansion rather than missing core functionality:
+**No product item from the agreed completion checklist remains open.**
 
-- richer animated pit crews and pit-lane choreography
-- more elaborate automated television/incident-replay direction and podium ceremony
-- continued bespoke constructor/livery art refinement
-- continued profiling and mobile-load optimisation after the current vendor code-splitting pass
-
-These items must not be presented as prerequisites for the validated BANC/racing architecture.
+Future changes are optional expansion, experimentation or replacement of already-working systems, not incomplete requirements for this release. Any future physics-engine replacement, binary replay format, authored audio library or additional art pass should be treated as a new scope rather than an unfinished part of the validated browser product.
