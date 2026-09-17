@@ -7,7 +7,7 @@ const manifestPath=path.join(ROOT,'manifest.json');
 const fail=message=>{throw new Error(`Full BANC release gate failed: ${message}`)};
 if(!fs.existsSync(manifestPath))fail('manifest.json is missing; refusing to publish a non-BANC build');
 const manifest=JSON.parse(fs.readFileSync(manifestPath,'utf8'));
-const N=188508, E=11510975;
+const N=188508, E=11752828;
 if(manifest.schema!=='BANC-V888-FULL-GRAPH/1')fail(`schema ${manifest.schema}`);
 if(manifest.materialization!==888)fail(`materialization ${manifest.materialization}`);
 if(manifest.neurons!==N)fail(`mapped rows ${manifest.neurons} != ${N}`);
