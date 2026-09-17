@@ -4,65 +4,105 @@ import { getTrackDefinition,trackPoint,trackTangent,TRACK_WIDTH } from '@agp/sim
 const hash=(s:string)=>{let h=2166136261>>>0;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)>>>0;}return h>>>0;};
 const mk=(colour:string,metalness=.1,roughness=.65)=>new THREE.MeshStandardMaterial({color:colour,metalness,roughness});
 
-function textureLabel(trackId:string){
+function boardTexture(trackId:string){
   const t=getTrackDefinition(trackId),canvas=document.createElement('canvas');canvas.width=1024;canvas.height=256;const c=canvas.getContext('2d')!;
-  c.fillStyle='#071018';c.fillRect(0,0,1024,256);c.fillStyle='#f4e8ce';c.font='900 86px Arial Black,Arial';c.textAlign='center';c.textBaseline='middle';c.fillText(t.venue.toUpperCase(),512,105);c.fillStyle='#d7a647';c.font='700 34px Arial';c.fillText(`AI GRAND PRIX · ROUND ${String(t.round).padStart(2,'0')} · 2027`,512,185);const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;return tex;
+  const g=c.createLinearGradient(0,0,1024,0);g.addColorStop(0,'#05080b');g.addColorStop(.7,'#101820');g.addColorStop(1,'#071018');c.fillStyle=g;c.fillRect(0,0,1024,256);
+  c.fillStyle='#d9ad50';c.fillRect(0,0,13,256);c.fillStyle='#f4efe5';c.font='800 70px Arial, sans-serif';c.textAlign='left';c.textBaseline='middle';c.fillText(t.venue.toUpperCase(),54,103);
+  c.fillStyle='#8e9ba5';c.font='600 29px Arial, sans-serif';c.fillText(`AI GRAND PRIX  ·  ROUND ${String(t.round).padStart(2,'0')}  ·  2027`,56,171);
+  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;return tex;
+}
+
+function circuitRibbon(trackId:string,side:-1|1,offset:number,bottom:number,top:number,segments:number){
+  const positions:number[]=[],uv:number[]=[],indices:number[]=[];
+  for(let i=0;i<=segments;i++){
+    const u=(i%segments)/segments,p=trackPoint(u,trackId),tan=trackTangent(u,trackId),nx=tan.z*side,nz=-tan.x*side,x=p.x+nx*offset,z=p.z+nz*offset;
+    positions.push(x,bottom,z,x,top,z);uv.push(i/12,0,i/12,1);
+    if(i<segments){const a=i*2;indices.push(a,a+2,a+1,a+1,a+2,a+3);}
+  }
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(indices);g.computeVertexNormals();return g;
+}
+
+function addSmoothSafetySystem(group:THREE.Group,trackId:string,lowPower:boolean){
+  const segments=lowPower?110:190,offset=TRACK_WIDTH*.5+2.2;
+  const wallMat=new THREE.MeshStandardMaterial({color:'#c9c8c3',roughness:.7,metalness:.08});
+  const railMat=new THREE.MeshStandardMaterial({color:'#56616a',roughness:.36,metalness:.74});
+  for(const side of [-1,1] as const){
+    const wall=new THREE.Mesh(circuitRibbon(trackId,side,offset,.10,.55,segments),wallMat);wall.receiveShadow=true;wall.castShadow=!lowPower;group.add(wall);
+    // A slim dark rail above the wall reads as a proper safety system without a row of blocks.
+    const rail=new THREE.Mesh(circuitRibbon(trackId,side,offset+.03,.58,.66,segments),railMat);rail.receiveShadow=true;group.add(rail);
+  }
+
+  if(lowPower)return;
+  const dummy=new THREE.Object3D(),postGeo=new THREE.CylinderGeometry(.026,.032,1.9,6),postMat=mk('#59636b',.72,.3),postCount=70;
+  const posts=new THREE.InstancedMesh(postGeo,postMat,postCount*2);let n=0;
+  for(let i=0;i<postCount;i++){
+    const u=i/postCount,p=trackPoint(u,trackId),tan=trackTangent(u,trackId);
+    for(const side of [-1,1]){dummy.position.set(p.x+tan.z*(offset+.08)*side,1.48,p.z-tan.x*(offset+.08)*side);dummy.rotation.set(0,0,0);dummy.updateMatrix();posts.setMatrixAt(n++,dummy.matrix);}
+  }
+  posts.count=n;group.add(posts);
+}
+
+function addKerbs(group:THREE.Group,trackId:string,lowPower:boolean,seed:number){
+  const count=lowPower?110:180,dummy=new THREE.Object3D(),geo=new THREE.BoxGeometry(.54,.055,1.45),ivory=mk('#f3eee3',.02,.72),accent=mk(seed%3===0?'#ca3037':'#2458b8',.04,.67),a=new THREE.InstancedMesh(geo,ivory,count*2),b=new THREE.InstancedMesh(geo,accent,count*2);let ai=0,bi=0;
+  for(let i=0;i<count;i++){
+    const u=i/count,p=trackPoint(u,trackId),tan=trackTangent(u,trackId),yaw=Math.atan2(tan.x,tan.z),m=i%2===0?a:b;
+    for(const side of [-1,1]){dummy.position.set(p.x+tan.z*(TRACK_WIDTH*.5-.12)*side,.12,p.z-tan.x*(TRACK_WIDTH*.5-.12)*side);dummy.rotation.set(0,yaw,0);dummy.updateMatrix();m.setMatrixAt(m===a?ai++:bi++,dummy.matrix);}
+  }
+  a.count=ai;b.count=bi;a.receiveShadow=b.receiveShadow=true;group.add(a,b);
+}
+
+function addGrandstand(group:THREE.Group,trackId:string,u:number,side:-1|1,lowPower:boolean,index:number){
+  const p=trackPoint(u,trackId),tan=trackTangent(u,trackId),yaw=Math.atan2(tan.x,tan.z),stand=new THREE.Group();
+  const concrete=mk('#454b50',.08,.78),seat=mk(index%2?'#1b2229':'#262e35',.2,.62),roofMat=mk('#171c21',.46,.35),steel=mk('#747e85',.76,.27);
+  const rows=lowPower?3:5;
+  for(let row=0;row<rows;row++){
+    const deck=new THREE.Mesh(new THREE.BoxGeometry(9.8-row*.36,.18,.76),row%2?seat:concrete);deck.position.set(0,.48+row*.39,-row*.49);deck.receiveShadow=true;stand.add(deck);
+  }
+  for(const x of [-4.3,0,4.3]){const support=new THREE.Mesh(new THREE.CylinderGeometry(.045,.055,3.2,7),steel);support.position.set(x,1.65,-1.15);support.rotation.z=x===0?0:.04*Math.sign(x);stand.add(support);}
+  const roof=new THREE.Mesh(new THREE.BoxGeometry(10.6,.10,2.65),roofMat);roof.position.set(0,3.16,-1.18);roof.rotation.x=-.08;roof.castShadow=!lowPower;stand.add(roof);
+  if(!lowPower){const fascia=new THREE.Mesh(new THREE.PlaneGeometry(7.3,.72),new THREE.MeshBasicMaterial({map:boardTexture(trackId),side:THREE.DoubleSide}));fascia.position.set(0,2.56,.03);stand.add(fascia);}
+  stand.position.set(p.x+tan.z*(TRACK_WIDTH*.5+12.8)*side,.05,p.z-tan.x*(TRACK_WIDTH*.5+12.8)*side);stand.rotation.y=yaw+(side<0?Math.PI:0);group.add(stand);
+}
+
+function addGantry(group:THREE.Group,trackId:string,u:number,primary:boolean){
+  const p=trackPoint(u,trackId),tan=trackTangent(u,trackId),yaw=Math.atan2(tan.x,tan.z),g=new THREE.Group(),carbon=mk('#161d23',.56,.33),metal=mk('#8a9297',.8,.25);
+  for(const side of [-1,1]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.10,.13,5.0,8),metal);leg.position.set(side*(TRACK_WIDTH*.5+1.8),2.5,0);g.add(leg);}
+  const beam=new THREE.Mesh(new THREE.BoxGeometry(TRACK_WIDTH+4.0,.22,.28),carbon);beam.position.y=4.88;g.add(beam);
+  if(primary){const board=new THREE.Mesh(new THREE.PlaneGeometry(7.2,1.28),new THREE.MeshBasicMaterial({map:boardTexture(trackId),side:THREE.DoubleSide}));board.position.set(0,4.3,.17);g.add(board);}
+  g.position.set(p.x,0,p.z);g.rotation.y=yaw;group.add(g);
 }
 
 export function decoratePremiumCircuit(group:THREE.Group,trackId:string,lowPower=false){
-  const t=getTrackDefinition(trackId),seed=hash(trackId),dummy=new THREE.Object3D();
-  const barrierMat=mk(seed%2?'#d9d6cd':'#20262b',.28,.38),fenceMat=mk('#626a70',.78,.28),kerbA=mk('#f4e8ce',.05,.76),kerbB=mk(seed%3===0?'#d62828':'#073bbe',.05,.73),dark=mk('#11161b',.45,.34),gold=mk('#d7a647',.5,.28),concrete=mk('#7a7e7d',.05,.82);
-  const samples=lowPower?96:150;
-  const barrierGeo=new THREE.BoxGeometry(.22,.78,2.3),postGeo=new THREE.CylinderGeometry(.028,.038,1.8,5),kerbGeo=new THREE.BoxGeometry(.46,.055,1.65);
-  const barriers=new THREE.InstancedMesh(barrierGeo,barrierMat,samples*2),posts=new THREE.InstancedMesh(postGeo,fenceMat,lowPower?0:samples*2),kerbs=new THREE.InstancedMesh(kerbGeo,kerbA,samples*2);
-  let bi=0,pi=0,ki=0;
-  for(let i=0;i<samples;i++){
-    const u=i/samples,p=trackPoint(u,trackId),tan=trackTangent(u,trackId),yaw=Math.atan2(tan.x,tan.z);
-    for(const side of [-1,1]){
-      const bx=p.x+tan.z*(TRACK_WIDTH*.5+2.1)*side,bz=p.z-tan.x*(TRACK_WIDTH*.5+2.1)*side;
-      dummy.position.set(bx,.48,bz);dummy.rotation.set(0,yaw,0);dummy.updateMatrix();barriers.setMatrixAt(bi++,dummy.matrix);
-      if(!lowPower){dummy.position.set(p.x+tan.z*(TRACK_WIDTH*.5+2.35)*side,1.35,p.z-tan.x*(TRACK_WIDTH*.5+2.35)*side);dummy.rotation.set(0,0,0);dummy.updateMatrix();posts.setMatrixAt(pi++,dummy.matrix);}
-      const kx=p.x+tan.z*(TRACK_WIDTH*.5-.26)*side,kz=p.z-tan.x*(TRACK_WIDTH*.5-.26)*side;dummy.position.set(kx,.205,kz);dummy.rotation.set(0,yaw,0);dummy.updateMatrix();kerbs.setMatrixAt(ki++,dummy.matrix);
-    }
+  const t=getTrackDefinition(trackId),seed=hash(trackId);
+  addSmoothSafetySystem(group,trackId,lowPower);
+  addKerbs(group,trackId,lowPower,seed);
+
+  // Lower, cleaner broadcast architecture. It gives the venue scale without filling the
+  // camera with black slabs or hiding the racing surface.
+  const standCount=lowPower?2:5;
+  for(let i=0;i<standCount;i++)addGrandstand(group,trackId,((i+.52)/standCount+.037*(seed%4))%1,i%2?1:-1,lowPower,i);
+
+  addGantry(group,trackId,0,true);
+  addGantry(group,trackId,.34,false);
+  addGantry(group,trackId,.68,false);
+
+  // Sparse braking markers / marshal LEDs rather than repeated billboard clutter.
+  const dummy=new THREE.Object3D(),poleMat=mk('#454e55',.72,.32),lampMat=new THREE.MeshStandardMaterial({color:'#e8c86e',emissive:'#e8c86e',emissiveIntensity:1.5}),poleGeo=new THREE.CylinderGeometry(.035,.045,2.3,6),lampGeo=new THREE.BoxGeometry(.18,.35,.12),count=lowPower?7:12,poles=new THREE.InstancedMesh(poleGeo,poleMat,count),lamps=new THREE.InstancedMesh(lampGeo,lampMat,count);
+  for(let i=0;i<count;i++){
+    const u=(.075+i/count)%1,p=trackPoint(u,trackId),tan=trackTangent(u,trackId),side=i%2?1:-1,x=p.x+tan.z*(TRACK_WIDTH*.5+3.4)*side,z=p.z-tan.x*(TRACK_WIDTH*.5+3.4)*side,yaw=Math.atan2(tan.x,tan.z);
+    dummy.position.set(x,1.15,z);dummy.rotation.set(0,0,0);dummy.updateMatrix();poles.setMatrixAt(i,dummy.matrix);
+    dummy.position.set(x,2.23,z);dummy.rotation.set(0,yaw,0);dummy.updateMatrix();lamps.setMatrixAt(i,dummy.matrix);
   }
-  barriers.count=bi;kerbs.count=ki;barriers.castShadow=!lowPower;barriers.receiveShadow=true;kerbs.receiveShadow=true;group.add(barriers,kerbs);if(!lowPower){posts.count=pi;group.add(posts);}
+  group.add(poles,lamps);
 
-  // Alternating kerb identity without doubling road geometry.
-  const accentKerbs=new THREE.InstancedMesh(kerbGeo,kerbB,Math.floor(samples/2));let ai=0;
-  for(let i=0;i<samples;i+=4){const u=i/samples,p=trackPoint(u,trackId),tan=trackTangent(u,trackId),yaw=Math.atan2(tan.x,tan.z),side=i%8===0?1:-1;dummy.position.set(p.x+tan.z*(TRACK_WIDTH*.5-.26)*side,.212,p.z-tan.x*(TRACK_WIDTH*.5-.26)*side);dummy.rotation.set(0,yaw,0);dummy.updateMatrix();accentKerbs.setMatrixAt(ai++,dummy.matrix);}accentKerbs.count=ai;group.add(accentKerbs);
+  // Pit building silhouette stays deliberately set back from the asphalt. The interactive
+  // crew/pit-lane module supplies the foreground detail during pit coverage.
+  const sp=trackPoint(.012,trackId),st=trackTangent(.012,trackId),pit=new THREE.Group(),base=mk('#30363b',.16,.66),glass=new THREE.MeshPhysicalMaterial({color:'#172631',metalness:.28,roughness:.18,transmission:.04,transparent:true,opacity:.92}),gold=mk('#c9a24e',.45,.34);
+  const building=new THREE.Mesh(new THREE.BoxGeometry(29,3.0,4.3),base);building.position.set(0,1.5,0);building.castShadow=!lowPower;pit.add(building);
+  const windows=new THREE.Mesh(new THREE.BoxGeometry(27.5,.92,4.36),glass);windows.position.set(0,2.05,0);pit.add(windows);
+  const canopy=new THREE.Mesh(new THREE.BoxGeometry(30,.12,5.15),mk('#171d22',.55,.35));canopy.position.set(0,3.08,-.18);pit.add(canopy);
+  const line=new THREE.Mesh(new THREE.BoxGeometry(29.4,.07,.11),gold);line.position.set(0,2.95,2.19);pit.add(line);
+  pit.position.set(sp.x+st.z*(TRACK_WIDTH*.5+10.8),0,sp.z-st.x*(TRACK_WIDTH*.5+10.8));pit.rotation.y=Math.atan2(st.x,st.z);group.add(pit);
 
-  // Grandstands: deliberately generic AGP architecture, positioned from circuit data rather than copied venue models.
-  const standCount=lowPower?3:6;
-  for(let i=0;i<standCount;i++){
-    const u=((i+.35)/standCount+.04*(seed%5))%1,p=trackPoint(u,trackId),tan=trackTangent(u,trackId),side=i%2?1:-1,yaw=Math.atan2(tan.x,tan.z),stand=new THREE.Group();
-    for(let row=0;row<(lowPower?3:5);row++){
-      const seat=new THREE.Mesh(new THREE.BoxGeometry(11-row*.65,.28,1.05),row%2?dark:concrete);seat.position.set(0,row*.48,-row*.55);seat.receiveShadow=true;stand.add(seat);
-    }
-    const roof=new THREE.Mesh(new THREE.BoxGeometry(11.5,.14,2.9),dark);roof.position.set(0,3.05,-1.35);roof.rotation.x=-.1;stand.add(roof);
-    const sign=new THREE.Mesh(new THREE.PlaneGeometry(8.7,1.25),new THREE.MeshBasicMaterial({map:textureLabel(trackId),side:THREE.DoubleSide}));sign.position.set(0,2.1,.12);stand.add(sign);
-    stand.position.set(p.x+tan.z*(TRACK_WIDTH*.5+12.5)*side,.3,p.z-tan.x*(TRACK_WIDTH*.5+12.5)*side);stand.rotation.y=yaw+(side<0?Math.PI:0);group.add(stand);
-  }
-
-  // Start/finish gantry and two sector gantries.
-  for(const [j,u] of [0,.333,.666].entries()){
-    const p=trackPoint(u,trackId),tan=trackTangent(u,trackId),yaw=Math.atan2(tan.x,tan.z),gantry=new THREE.Group();
-    const beam=new THREE.Mesh(new THREE.BoxGeometry(TRACK_WIDTH+5,.34,.34),j===0?gold:dark);beam.position.y=5.1;gantry.add(beam);
-    for(const side of [-1,1]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.32,5.1,.32),dark);leg.position.set(side*(TRACK_WIDTH*.5+2.1),2.55,0);gantry.add(leg);}
-    if(j===0){const board=new THREE.Mesh(new THREE.PlaneGeometry(7.4,1.55),new THREE.MeshBasicMaterial({map:textureLabel(trackId),side:THREE.DoubleSide}));board.position.set(0,4.35,.21);gantry.add(board);}
-    gantry.position.set(p.x,0,p.z);gantry.rotation.y=yaw;group.add(gantry);
-  }
-
-  // Braking boards and race-control light posts around the lap.
-  const boardMat=new THREE.MeshBasicMaterial({color:'#f4e8ce'}),boardText=mk('#071018',.05,.8);
-  for(let i=0;i<(lowPower?8:14);i++){
-    const u=(.06+i/(lowPower?8:14))%1,p=trackPoint(u,trackId),tan=trackTangent(u,trackId),side=i%2?1:-1;
-    const pole=new THREE.Mesh(new THREE.CylinderGeometry(.04,.05,2.5,6),fenceMat);pole.position.set(p.x+tan.z*(TRACK_WIDTH*.5+4)*side,1.25,p.z-tan.x*(TRACK_WIDTH*.5+4)*side);group.add(pole);
-    const board=new THREE.Mesh(new THREE.BoxGeometry(.82,.72,.09),i%3===0?boardText:boardMat);board.position.copy(pole.position).add(new THREE.Vector3(0,1.15,0));board.rotation.y=Math.atan2(tan.x,tan.z);group.add(board);
-  }
-
-  // Paddock/pit silhouette close to start finish for visual density.
-  const sp=trackPoint(.015,trackId),st=trackTangent(.015,trackId),pit=new THREE.Group();
-  for(let i=0;i<(lowPower?4:8);i++){const box=new THREE.Mesh(new THREE.BoxGeometry(4.3,2.5,4.1),i%2?dark:concrete);box.position.set(i*4.5,1.25,0);pit.add(box);const stripe=new THREE.Mesh(new THREE.BoxGeometry(4.34,.18,4.14),i%2?gold:kerbB);stripe.position.set(i*4.5,2.25,0);pit.add(stripe);}pit.position.set(sp.x+st.z*(TRACK_WIDTH*.5+7),0,sp.z-st.x*(TRACK_WIDTH*.5+7));pit.rotation.y=Math.atan2(st.x,st.z);group.add(pit);
-
-  group.userData.premiumCircuit={trackId,venue:t.venue,round:t.round};
+  group.userData.premiumCircuit={trackId,venue:t.venue,round:t.round,version:4};
 }
