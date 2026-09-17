@@ -3,7 +3,7 @@ on:
   push:
     branches: [connectome-world-championship]
     paths:
-      - scripts/build_banc_projection.py
+      - scripts/build_banc_projection_v2.py
       - scripts/banc-requirements.txt
       - .github/workflows/banc-v888.yml
   workflow_dispatch:
@@ -21,8 +21,8 @@ jobs:
           cache-dependency-path: scripts/banc-requirements.txt
       - name: Install projection dependencies
         run: pip install -r scripts/banc-requirements.txt
-      - name: Build real BANC v888 sensorimotor projection
-        run: python scripts/build_banc_projection.py
+      - name: Build pinned real BANC v888 sensorimotor projection
+        run: python scripts/build_banc_projection_v2.py
       - name: Inspect projection
         run: |
           python - <<'PY'
@@ -30,10 +30,13 @@ jobs:
           from pathlib import Path
           p=Path('data/connectome/banc-v888-sensorimotor.json')
           d=json.loads(p.read_text())
-          assert d['schema']=='BANC-V888-SENSORIMOTOR-PROJECTION/1'
+          assert d['schema']=='BANC-V888-SENSORIMOTOR-PROJECTION/2'
+          assert d['materialization']==888
+          assert d['synapseModel']=='v2'
           assert d['stats']['selectedNeurons']>0
           assert d['stats']['populations']>0
           assert d['stats']['populationEdges']>0
+          assert d['sources']['metadata']['provenance'].startswith('htem/BANC-project@e31a2e26')
           print(d['stats'])
           print(f'projection bytes={p.stat().st_size}')
           PY
@@ -48,6 +51,6 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add data/connectome/banc-v888-sensorimotor.json apps/web/public/connectome/banc-v888-sensorimotor.json
           if ! git diff --cached --quiet; then
-            git commit -m "Persist real BANC v888 sensorimotor projection [skip ci]"
+            git commit -m "Persist pinned real BANC v888 sensorimotor projection [skip ci]"
             git push origin HEAD:connectome-world-championship
           fi
