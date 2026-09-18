@@ -53,23 +53,30 @@ function identityTexture(e:PremiumCarEntrant,kind:'number'|'team'){
   const t=new THREE.CanvasTexture(canvas);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;
 }
 
-function helmetPalette(e:PremiumCarEntrant){
-  const h=hash(e.id),pick=h%3;
-  return pick===0?[e.secondary,e.accent]:pick===1?[e.accent,'#F7F1E5']:[e.colour,'#F7F1E5'];
+function buildFlyDriver(lowPower:boolean){
+  const fly=new THREE.Group();fly.name='Drosophila driver';
+  const chitin=standard('#3a2419',.08,.62),dark=standard('#17100d',.04,.78),eye=new THREE.MeshPhysicalMaterial({color:'#8f1416',roughness:.28,clearcoat:.5}),wing=new THREE.MeshPhysicalMaterial({color:'#d8e1d8',transparent:true,opacity:.34,roughness:.18,side:THREE.DoubleSide,depthWrite:false});
+  add(fly,new THREE.SphereGeometry(.105,lowPower?10:18,lowPower?7:12),chitin,[0,.10,.10],[0,0,0],[1,1,.92]);
+  for(const side of [-1,1]){add(fly,new THREE.SphereGeometry(.065,lowPower?8:14,lowPower?6:10),eye,[side*.073,.115,.125],[0,0,0],[.58,1,.82]);const antenna=rod(fly,new THREE.Vector3(side*.045,.18,.14),new THREE.Vector3(side*.12,.27,.20),dark,.009,5);antenna.castShadow=true;}
+  add(fly,new THREE.SphereGeometry(.12,lowPower?10:18,lowPower?7:12),dark,[0,.02,-.04],[0,0,0],[.82,.72,1.08]);
+  add(fly,new THREE.SphereGeometry(.09,lowPower?9:16,lowPower?6:10),chitin,[0,-.04,-.18],[Math.PI/2,0,0],[.72,.72,1.35]);
+  if(!lowPower){for(const side of [-1,1]){const w=add(fly,new THREE.PlaneGeometry(.12,.28),wing,[side*.085,.075,-.09],[-.55,side*.32,side*.38]);w.renderOrder=6;}}
+  for(const side of [-1,1])for(let i=0;i<3;i++){const z=.04-i*.10;rod(fly,new THREE.Vector3(side*.055,.02,z),new THREE.Vector3(side*(.18+i*.018),-.09,z+.035),dark,.006,4);}
+  fly.rotation.x=-.10;fly.scale.setScalar(1.05);return fly;
 }
 
 /**
- * AGP-27: an original contemporary single-seater silhouette built specifically for the
+ * AGP-28: an original contemporary single-seater silhouette built specifically for the
  * Connectome World Championship. It uses modern Formula proportions without copying any
  * one real chassis: long wheelbase, narrow raised nose, sculpted sidepod undercuts,
  * ground-effect floor edges, exposed wishbones, 18-inch-style tyres and multi-plane wings.
  */
 export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
-  const g=new THREE.Group();g.name=`AGP-27 ${e.provider} #${e.number}`;
+  const g=new THREE.Group();g.name=`AGP-28 ${e.provider} #${e.number}`;
   const teams=['McLARVAE RACING','MERCED-EYES','RED BUG RACING','SCUDERIA FLYRRARI','WINGLIAMS RACING','RACING BUGS','ASTON MIDGE','HAASFLY','AUD-EYE SPORT','FLYPINE','CADDIS-LAC RACING'];
   const known=teams.indexOf(e.provider),variant=known>=0?known:hash(e.provider)%11;
   const body=paint(e.colour,.34,.13,1),secondary=paint(e.secondary,.27,.17,.95),accent=paint(e.accent,.42,.14,.92);
-  const carbon=standard('#050607',.82,.20),carbon2=standard('#111519',.66,.29),rubber=standard('#050506',.02,.93),rim=standard('#a7adb1',.92,.16),brake=standard('#4d5053',.84,.28),visor=paint('#061822',.58,.07,.92);
+  const carbon=standard('#050607',.82,.20),carbon2=standard('#111519',.66,.29),rubber=standard('#050506',.02,.93),rim=standard('#a7adb1',.92,.16),brake=standard('#4d5053',.84,.28);
 
   // Floor / venturi silhouette: thin, wide and visually separate from the bodywork.
   add(g,aeroWedge(1.62,2.18,.06,.085,4.92),carbon,[0,.18,-.10]);
@@ -101,12 +108,10 @@ export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
     add(g,new THREE.BoxGeometry(.026,.055,2.60),secondary,[side*.93,.73,-.33],[0,0,side*.08]);
   }
 
-  // Cockpit shoulders, driver and halo.
+  // Cockpit shoulders and a visible physical Drosophila driver. The fly is intentionally
+  // exposed above the survival cell so broadcast/t-cam/chase shots read the biological premise.
   add(g,aeroWedge(.88,.69,.25,.35,.95),carbon2,[0,.77,-.28]);
-  const [helmetBase,helmetStripe]=helmetPalette(e);
-  add(g,new THREE.SphereGeometry(.285,lowPower?12:22,lowPower?8:14),paint(helmetBase,.30,.17,.9),[0,1.03,-.47],[0,0,0],[1,.88,1.04]);
-  add(g,new THREE.SphereGeometry(.245,lowPower?10:18,lowPower?7:12,0,Math.PI*2,0,Math.PI*.46),visor,[0,1.065,-.305],[.08,0,0],[1,.55,.72]);
-  add(g,new THREE.BoxGeometry(.045,.29,.39),paint(helmetStripe,.25,.2,.8),[0,1.24,-.49],[0,0,.05]);
+  const flyDriver=buildFlyDriver(lowPower);flyDriver.position.set(0,1.12,-.43);flyDriver.scale.setScalar(lowPower?.82:1.02);g.add(flyDriver);
   const haloMat=standard('#111418',.90,.13),halo=new THREE.Mesh(new THREE.TorusGeometry(.37,.034,lowPower?5:8,lowPower?18:32,Math.PI*1.62),haloMat);
   halo.position.set(0,1.09,-.48);halo.rotation.set(Math.PI/2,0,.76);halo.castShadow=true;g.add(halo);
   rod(g,new THREE.Vector3(0,1.06,-.78),new THREE.Vector3(0,.80,.03),haloMat,.034,lowPower?5:8);
@@ -157,6 +162,25 @@ export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
     rod(g,new THREE.Vector3(inX,.32,z+.18),new THREE.Vector3(x*.91,y,z),carbon,.017,6);
   }
 
+  // AGP-28 detail pass: brake ducts, wheel nuts, floor strakes, nose camera and rear cooling.
+  // These small hard-edged forms stop the car reading as a single smooth blob in close TV shots.
+  for(const [x,y,z,front] of specs){
+    const side=Math.sign(x),nut=add(g,new THREE.CylinderGeometry(.075,.075,.06,lowPower?8:16),accent,[x+side*(front?.205:.238),y,z],[0,0,Math.PI/2]);
+    nut.castShadow=true;
+    add(g,new THREE.BoxGeometry(.075,.23,.18),carbon2,[side*(front?1.24:1.27),y,z+(front?-.05:.08)],[0,side*.12,0]);
+  }
+  for(const side of [-1,1]){
+    add(g,aeroWedge(.055,.045,.17,.28,1.55),carbon2,[side*.78,.29,-1.28],[0,0,side*.05]);
+    add(g,aeroWedge(.045,.035,.13,.20,1.25),carbon2,[side*.94,.30,-1.12],[0,0,side*.08]);
+    add(g,new THREE.BoxGeometry(.055,.31,.68),carbon,[side*.54,.63,-2.05],[0,0,side*.16]);
+    if(!lowPower){add(g,new THREE.BoxGeometry(.025,.18,.56),accent,[side*.69,.86,-1.73],[0,0,side*.10]);}
+  }
+  add(g,new THREE.BoxGeometry(.20,.10,.16),carbon2,[0,.78,2.32],[-.08,0,0]);
+  add(g,new THREE.BoxGeometry(.10,.055,.22),accent,[0,.84,2.34],[-.08,0,0]);
+  // Distinct exhaust and gearbox termination beneath the rear wing.
+  add(g,new THREE.CylinderGeometry(.075,.095,.38,lowPower?8:14),standard('#555b60',.72,.22),[0,.67,-2.48],[Math.PI/2,0,0]);
+  add(g,aeroWedge(.72,.46,.20,.15,.72),carbon2,[0,.47,-2.30],[.08,0,0]);
+
   // Constructor livery languages: large clean zones, not random stripes.
   if(variant===0){
     add(g,aeroWedge(.35,.24,.035,.035,3.45),secondary,[0,.955,.05],[0,0,-.045]);
@@ -202,7 +226,7 @@ export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
   const sprays=[-1,1].map(side=>add(g,new THREE.ConeGeometry(.22,1.48,lowPower?5:8,1,true),sprayMaterial.clone(),[side*1.20,.34,-2.42],[-Math.PI/2,0,0]));sprays.forEach(m=>{m.visible=false;m.renderOrder=2;});
   const rain=add(g,new THREE.BoxGeometry(.24,.085,.05),new THREE.MeshStandardMaterial({color:'#f32626',emissive:'#f32626',emissiveIntensity:3.2}),[0,.55,-2.98]);
 
-  g.userData.rainLight=rain;g.userData.wheels=wheels;g.userData.spray=sprays;g.userData.premiumCar=true;g.userData.team=e.provider;g.userData.variant=variant;g.userData.chassis='AGP-27';
+  g.userData.flyDriver=flyDriver;g.userData.rainLight=rain;g.userData.wheels=wheels;g.userData.spray=sprays;g.userData.premiumCar=true;g.userData.team=e.provider;g.userData.variant=variant;g.userData.chassis='AGP-28';
   g.scale.setScalar(.80);
   return g;
 }

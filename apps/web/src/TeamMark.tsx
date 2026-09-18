@@ -61,5 +61,9 @@ export function TeamMark({teamId,className='',title}:Props){
   }})()
   return <svg className={`team-mark team-mark-${teamId} ${className}`} viewBox="0 0 72 72" role={title?'img':'presentation'} aria-label={title}>
     <g className="mark-fill" fill="currentColor">{mark}</g>
+    <g className="mark-bio-signature" fill="currentColor" opacity=".92">
+      <circle cx="31.5" cy="64.5" r="1.45"/><circle cx="36" cy="65.4" r="1.45"/><circle cx="40.5" cy="64.5" r="1.45"/>
+      <path d="M31 62 27.5 58.5M41 62l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/>
+    </g>
   </svg>
 }

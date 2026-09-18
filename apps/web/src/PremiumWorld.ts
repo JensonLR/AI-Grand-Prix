@@ -9,6 +9,21 @@ const MOUNTAIN=new Set(['pt-2008','at-1969','be-1925','tr-2005']);
 const seeded=(seed:number)=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
 const hash=(s:string)=>{let h=2166136261>>>0;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)>>>0;}return h>>>0;};
 
+type VenueProfile={tone:string;accent:string;feature:'flood'|'waterfront'|'park'|'forest'|'metro'|'stadium'|'harbour'|'hills'|'airfield'|'alpine'|'boulevard';};
+const VENUE:Record<string,VenueProfile>={
+'bh-2002':{tone:'#b89b67',accent:'#f0c86a',feature:'flood'},'sa-2021':{tone:'#77756c',accent:'#6edcff',feature:'waterfront'},
+'au-1953':{tone:'#426b4a',accent:'#d9e7c5',feature:'park'},'jp-1962':{tone:'#31543b',accent:'#e7e4dc',feature:'forest'},
+'cn-2004':{tone:'#535b61',accent:'#d74a4a',feature:'metro'},'us-2022':{tone:'#506c5b',accent:'#ef87b5',feature:'stadium'},
+'ca-1978':{tone:'#3f6748',accent:'#d7e7db',feature:'waterfront'},'mc-1929':{tone:'#8d8b82',accent:'#5fc6e8',feature:'harbour'},
+'pt-2008':{tone:'#8b7954',accent:'#e3c06b',feature:'hills'},'gb-1948':{tone:'#52614b',accent:'#b8c5ce',feature:'airfield'},
+'at-1969':{tone:'#476047',accent:'#d8e1d4',feature:'alpine'},'be-1925':{tone:'#2f5138',accent:'#c9d6c7',feature:'forest'},
+'hu-1986':{tone:'#6d704e',accent:'#d9bd65',feature:'hills'},'it-1922':{tone:'#35593d',accent:'#d8e2d4',feature:'forest'},
+'es-2026':{tone:'#69625a',accent:'#e2b94d',feature:'metro'},'az-2016':{tone:'#7a756d',accent:'#62b9d5',feature:'boulevard'},
+'tr-2005':{tone:'#667052',accent:'#d0c17c',feature:'hills'},'sg-2008':{tone:'#3d4c58',accent:'#8ee9e0',feature:'boulevard'},
+'us-2012':{tone:'#826c50',accent:'#e0584d',feature:'hills'},'mx-1962':{tone:'#6b6859',accent:'#63b58d',feature:'stadium'},
+'br-1940':{tone:'#486147',accent:'#e1c85c',feature:'stadium'},'us-2023':{tone:'#393846',accent:'#ef5ac8',feature:'boulevard'},
+'qa-2004':{tone:'#aa956f',accent:'#c9e5ff',feature:'flood'},'ae-2009':{tone:'#a9946d',accent:'#63cfe0',feature:'harbour'}
+};
 export interface PremiumWorldResult{water:THREE.Mesh|null;kind:WorldKind;}
 function kindFor(id:string):WorldKind{if(DESERT.has(id))return'desert';if(CITY.has(id))return'city';if(PARK.has(id))return'park';if(MOUNTAIN.has(id))return'mountain';return'circuit';}
 
@@ -75,9 +90,23 @@ export function buildPremiumWorld(group:THREE.Group,scene:THREE.Scene,trackId:st
     }
   }
 
+  // V8 venue fingerprint: every championship stop gets a distinct architectural read.
+  const profile=VENUE[trackId]??{tone:'#596255',accent:'#d7a647',feature:'park' as const};
+  const landmarkMat=new THREE.MeshStandardMaterial({color:profile.tone,roughness:.62,metalness:.12}),glow=new THREE.MeshStandardMaterial({color:profile.accent,emissive:profile.accent,emissiveIntensity:.35,roughness:.35});
+  const lp=trackPoint(.34,trackId),landmark=new THREE.Group();landmark.position.set(lp.x+span*.30,0,lp.z+span*.24);group.add(landmark);
+  const tower=(x:number,z:number,h:number,w:number)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,w),landmarkMat);m.position.set(x,h/2,z);landmark.add(m);const crown=new THREE.Mesh(new THREE.BoxGeometry(w*1.15,.35,w*1.15),glow);crown.position.set(x,h,z);landmark.add(crown);};
+  if(profile.feature==='stadium'){for(let i=0;i<10;i++){const a=i/10*Math.PI*2,m=new THREE.Mesh(new THREE.BoxGeometry(8,5,16),landmarkMat);m.position.set(Math.cos(a)*24,2.5,Math.sin(a)*24);m.rotation.y=-a;landmark.add(m);}}
+  else if(profile.feature==='harbour'||profile.feature==='waterfront'){for(let i=0;i<(lowPower?3:6);i++){const hull=new THREE.Mesh(new THREE.BoxGeometry(2.4,.7,6+i),new THREE.MeshStandardMaterial({color:'#e6e2d7',roughness:.35}));hull.position.set(i*5-12,.35,8+Math.sin(i)*4);landmark.add(hull);}tower(-16,-8,18,7);}
+  else if(profile.feature==='alpine'||profile.feature==='hills'){for(let i=0;i<5;i++){const hill=new THREE.Mesh(new THREE.ConeGeometry(18+i*3,12+i*4,8),landmarkMat);hill.position.set((i-2)*22,5,-15-Math.abs(i-2)*8);landmark.add(hill);}}
+  else if(profile.feature==='airfield'){tower(-14,0,8,18);tower(12,4,6,14);const mast=new THREE.Mesh(new THREE.CylinderGeometry(.18,.22,24,7),glow);mast.position.set(0,12,-12);landmark.add(mast);}
+  else if(profile.feature==='forest'||profile.feature==='park'){for(let i=0;i<(lowPower?8:16);i++){const tree=new THREE.Mesh(new THREE.ConeGeometry(2.4,8,7),landmarkMat);tree.position.set((i%8)*6-21,4,Math.floor(i/8)*8);landmark.add(tree);}}
+  else {for(let i=0;i<(lowPower?4:8);i++)tower((i%4)*10-15,Math.floor(i/4)*12,10+(i*7)%24,5+(i%3)*2);}
+  if(profile.feature==='flood'||profile.feature==='boulevard'){for(let i=0;i<6;i++){const mast=new THREE.Mesh(new THREE.CylinderGeometry(.10,.14,16,6),landmarkMat);mast.position.set(i*9-23,8,-10);landmark.add(mast);const lamp=new THREE.Mesh(new THREE.SphereGeometry(.32,8,5),glow);lamp.position.set(i*9-23,16,-10);landmark.add(lamp);}}
+  group.userData.venueProfile={...profile,round:track.round};
+
   // One restrained metadata plaque near start/finish. The old world repeated large signage
   // in the camera's focal plane, competing with cars and broadcast graphics.
   const p=trackPoint(.028,trackId),sign=new THREE.Mesh(new THREE.PlaneGeometry(15.5,3.6),new THREE.MeshBasicMaterial({map:venuePlaque(trackId),side:THREE.DoubleSide}));sign.position.set(p.x+16,2.8,p.z+17);sign.rotation.y=-.65;group.add(sign);
-  group.userData.world={trackId,kind,venue:track.venue,version:4};
+  group.userData.world={trackId,kind,venue:track.venue,version:8};
   return{water,kind};
 }
