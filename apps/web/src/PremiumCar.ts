@@ -53,6 +53,18 @@ function identityTexture(e:PremiumCarEntrant,kind:'number'|'team'){
   const t=new THREE.CanvasTexture(canvas);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;
 }
 
+function buildFlyDriver(e:PremiumCarEntrant,lowPower:boolean){
+  const fly=new THREE.Group();fly.name='Drosophila driver';
+  const chitin=standard('#3a2419',.08,.62),dark=standard('#17100d',.04,.78),eye=new THREE.MeshPhysicalMaterial({color:'#8f1416',roughness:.28,clearcoat:.5}),wing=new THREE.MeshPhysicalMaterial({color:'#d8e1d8',transparent:true,opacity:.34,roughness:.18,side:THREE.DoubleSide,depthWrite:false});
+  const head=add(fly,new THREE.SphereGeometry(.105,lowPower?10:18,lowPower?7:12),chitin,[0,.10,.10],[0,0,0],[1,1,.92]);
+  for(const side of [-1,1]){add(fly,new THREE.SphereGeometry(.065,lowPower?8:14,lowPower?6:10),eye,[side*.073,.115,.125],[0,0,0],[.58,1,.82]);const antenna=rod(fly,new THREE.Vector3(side*.045,.18,.14),new THREE.Vector3(side*.12,.27,.20),dark,.009,5);antenna.castShadow=true;}
+  add(fly,new THREE.SphereGeometry(.12,lowPower?10:18,lowPower?7:12),dark,[0,.02,-.04],[0,0,0],[.82,.72,1.08]);
+  add(fly,new THREE.SphereGeometry(.09,lowPower?9:16,lowPower?6:10),chitin,[0,-.04,-.18],[Math.PI/2,0,0],[.72,.72,1.35]);
+  if(!lowPower){for(const side of [-1,1]){const w=add(fly,new THREE.PlaneGeometry(.12,.28),wing,[side*.085,.075,-.09],[-.55,side*.32,side*.38]);w.renderOrder=6;}}
+  for(const side of [-1,1])for(let i=0;i<3;i++){const z=.04-i*.10;rod(fly,new THREE.Vector3(side*.055,.02,z),new THREE.Vector3(side*(.18+i*.018),-.09,z+.035),dark,.006,4);}
+  fly.rotation.x=-.10;fly.scale.setScalar(1.05);return fly;
+}
+
 function helmetPalette(e:PremiumCarEntrant){
   const h=hash(e.id),pick=h%3;
   return pick===0?[e.secondary,e.accent]:pick===1?[e.accent,'#F7F1E5']:[e.colour,'#F7F1E5'];
@@ -101,12 +113,10 @@ export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
     add(g,new THREE.BoxGeometry(.026,.055,2.60),secondary,[side*.93,.73,-.33],[0,0,side*.08]);
   }
 
-  // Cockpit shoulders, driver and halo.
+  // Cockpit shoulders and a visible physical Drosophila driver. The fly is intentionally
+  // exposed above the survival cell so broadcast/t-cam/chase shots read the biological premise.
   add(g,aeroWedge(.88,.69,.25,.35,.95),carbon2,[0,.77,-.28]);
-  const [helmetBase,helmetStripe]=helmetPalette(e);
-  add(g,new THREE.SphereGeometry(.285,lowPower?12:22,lowPower?8:14),paint(helmetBase,.30,.17,.9),[0,1.03,-.47],[0,0,0],[1,.88,1.04]);
-  add(g,new THREE.SphereGeometry(.245,lowPower?10:18,lowPower?7:12,0,Math.PI*2,0,Math.PI*.46),visor,[0,1.065,-.305],[.08,0,0],[1,.55,.72]);
-  add(g,new THREE.BoxGeometry(.045,.29,.39),paint(helmetStripe,.25,.2,.8),[0,1.24,-.49],[0,0,.05]);
+  const flyDriver=buildFlyDriver(e,lowPower);flyDriver.position.set(0,1.12,-.43);flyDriver.scale.setScalar(lowPower?.82:1.02);g.add(flyDriver);
   const haloMat=standard('#111418',.90,.13),halo=new THREE.Mesh(new THREE.TorusGeometry(.37,.034,lowPower?5:8,lowPower?18:32,Math.PI*1.62),haloMat);
   halo.position.set(0,1.09,-.48);halo.rotation.set(Math.PI/2,0,.76);halo.castShadow=true;g.add(halo);
   rod(g,new THREE.Vector3(0,1.06,-.78),new THREE.Vector3(0,.80,.03),haloMat,.034,lowPower?5:8);
@@ -202,7 +212,7 @@ export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
   const sprays=[-1,1].map(side=>add(g,new THREE.ConeGeometry(.22,1.48,lowPower?5:8,1,true),sprayMaterial.clone(),[side*1.20,.34,-2.42],[-Math.PI/2,0,0]));sprays.forEach(m=>{m.visible=false;m.renderOrder=2;});
   const rain=add(g,new THREE.BoxGeometry(.24,.085,.05),new THREE.MeshStandardMaterial({color:'#f32626',emissive:'#f32626',emissiveIntensity:3.2}),[0,.55,-2.98]);
 
-  g.userData.rainLight=rain;g.userData.wheels=wheels;g.userData.spray=sprays;g.userData.premiumCar=true;g.userData.team=e.provider;g.userData.variant=variant;g.userData.chassis='AGP-27';
+  g.userData.flyDriver=flyDriver;g.userData.rainLight=rain;g.userData.wheels=wheels;g.userData.spray=sprays;g.userData.premiumCar=true;g.userData.team=e.provider;g.userData.variant=variant;g.userData.chassis='AGP-27';
   g.scale.setScalar(.80);
   return g;
 }
