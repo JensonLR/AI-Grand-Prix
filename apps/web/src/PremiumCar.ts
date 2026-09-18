@@ -53,7 +53,7 @@ function identityTexture(e:PremiumCarEntrant,kind:'number'|'team'){
   const t=new THREE.CanvasTexture(canvas);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;
 }
 
-function buildFlyDriver(e:PremiumCarEntrant,lowPower:boolean){
+function buildFlyDriver(lowPower:boolean){
   const fly=new THREE.Group();fly.name='Drosophila driver';
   const chitin=standard('#3a2419',.08,.62),dark=standard('#17100d',.04,.78),eye=new THREE.MeshPhysicalMaterial({color:'#8f1416',roughness:.28,clearcoat:.5}),wing=new THREE.MeshPhysicalMaterial({color:'#d8e1d8',transparent:true,opacity:.34,roughness:.18,side:THREE.DoubleSide,depthWrite:false});
   const head=add(fly,new THREE.SphereGeometry(.105,lowPower?10:18,lowPower?7:12),chitin,[0,.10,.10],[0,0,0],[1,1,.92]);
@@ -116,7 +116,7 @@ export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
   // Cockpit shoulders and a visible physical Drosophila driver. The fly is intentionally
   // exposed above the survival cell so broadcast/t-cam/chase shots read the biological premise.
   add(g,aeroWedge(.88,.69,.25,.35,.95),carbon2,[0,.77,-.28]);
-  const flyDriver=buildFlyDriver(e,lowPower);flyDriver.position.set(0,1.12,-.43);flyDriver.scale.setScalar(lowPower?.82:1.02);g.add(flyDriver);
+  const flyDriver=buildFlyDriver(lowPower);flyDriver.position.set(0,1.12,-.43);flyDriver.scale.setScalar(lowPower?.82:1.02);g.add(flyDriver);
   const haloMat=standard('#111418',.90,.13),halo=new THREE.Mesh(new THREE.TorusGeometry(.37,.034,lowPower?5:8,lowPower?18:32,Math.PI*1.62),haloMat);
   halo.position.set(0,1.09,-.48);halo.rotation.set(Math.PI/2,0,.76);halo.castShadow=true;g.add(halo);
   rod(g,new THREE.Vector3(0,1.06,-.78),new THREE.Vector3(0,.80,.03),haloMat,.034,lowPower?5:8);
