@@ -56,18 +56,13 @@ function identityTexture(e:PremiumCarEntrant,kind:'number'|'team'){
 function buildFlyDriver(lowPower:boolean){
   const fly=new THREE.Group();fly.name='Drosophila driver';
   const chitin=standard('#3a2419',.08,.62),dark=standard('#17100d',.04,.78),eye=new THREE.MeshPhysicalMaterial({color:'#8f1416',roughness:.28,clearcoat:.5}),wing=new THREE.MeshPhysicalMaterial({color:'#d8e1d8',transparent:true,opacity:.34,roughness:.18,side:THREE.DoubleSide,depthWrite:false});
-  const head=add(fly,new THREE.SphereGeometry(.105,lowPower?10:18,lowPower?7:12),chitin,[0,.10,.10],[0,0,0],[1,1,.92]);
+  add(fly,new THREE.SphereGeometry(.105,lowPower?10:18,lowPower?7:12),chitin,[0,.10,.10],[0,0,0],[1,1,.92]);
   for(const side of [-1,1]){add(fly,new THREE.SphereGeometry(.065,lowPower?8:14,lowPower?6:10),eye,[side*.073,.115,.125],[0,0,0],[.58,1,.82]);const antenna=rod(fly,new THREE.Vector3(side*.045,.18,.14),new THREE.Vector3(side*.12,.27,.20),dark,.009,5);antenna.castShadow=true;}
   add(fly,new THREE.SphereGeometry(.12,lowPower?10:18,lowPower?7:12),dark,[0,.02,-.04],[0,0,0],[.82,.72,1.08]);
   add(fly,new THREE.SphereGeometry(.09,lowPower?9:16,lowPower?6:10),chitin,[0,-.04,-.18],[Math.PI/2,0,0],[.72,.72,1.35]);
   if(!lowPower){for(const side of [-1,1]){const w=add(fly,new THREE.PlaneGeometry(.12,.28),wing,[side*.085,.075,-.09],[-.55,side*.32,side*.38]);w.renderOrder=6;}}
   for(const side of [-1,1])for(let i=0;i<3;i++){const z=.04-i*.10;rod(fly,new THREE.Vector3(side*.055,.02,z),new THREE.Vector3(side*(.18+i*.018),-.09,z+.035),dark,.006,4);}
   fly.rotation.x=-.10;fly.scale.setScalar(1.05);return fly;
-}
-
-function helmetPalette(e:PremiumCarEntrant){
-  const h=hash(e.id),pick=h%3;
-  return pick===0?[e.secondary,e.accent]:pick===1?[e.accent,'#F7F1E5']:[e.colour,'#F7F1E5'];
 }
 
 /**
@@ -81,7 +76,7 @@ export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
   const teams=['McLARVAE RACING','MERCED-EYES','RED BUG RACING','SCUDERIA FLYRRARI','WINGLIAMS RACING','RACING BUGS','ASTON MIDGE','HAASFLY','AUD-EYE SPORT','FLYPINE','CADDIS-LAC RACING'];
   const known=teams.indexOf(e.provider),variant=known>=0?known:hash(e.provider)%11;
   const body=paint(e.colour,.34,.13,1),secondary=paint(e.secondary,.27,.17,.95),accent=paint(e.accent,.42,.14,.92);
-  const carbon=standard('#050607',.82,.20),carbon2=standard('#111519',.66,.29),rubber=standard('#050506',.02,.93),rim=standard('#a7adb1',.92,.16),brake=standard('#4d5053',.84,.28),visor=paint('#061822',.58,.07,.92);
+  const carbon=standard('#050607',.82,.20),carbon2=standard('#111519',.66,.29),rubber=standard('#050506',.02,.93),rim=standard('#a7adb1',.92,.16),brake=standard('#4d5053',.84,.28);
 
   // Floor / venturi silhouette: thin, wide and visually separate from the bodywork.
   add(g,aeroWedge(1.62,2.18,.06,.085,4.92),carbon,[0,.18,-.10]);
