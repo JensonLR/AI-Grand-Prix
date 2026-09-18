@@ -66,13 +66,13 @@ function buildFlyDriver(lowPower:boolean){
 }
 
 /**
- * AGP-27: an original contemporary single-seater silhouette built specifically for the
+ * AGP-28: an original contemporary single-seater silhouette built specifically for the
  * Connectome World Championship. It uses modern Formula proportions without copying any
  * one real chassis: long wheelbase, narrow raised nose, sculpted sidepod undercuts,
  * ground-effect floor edges, exposed wishbones, 18-inch-style tyres and multi-plane wings.
  */
 export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
-  const g=new THREE.Group();g.name=`AGP-27 ${e.provider} #${e.number}`;
+  const g=new THREE.Group();g.name=`AGP-28 ${e.provider} #${e.number}`;
   const teams=['McLARVAE RACING','MERCED-EYES','RED BUG RACING','SCUDERIA FLYRRARI','WINGLIAMS RACING','RACING BUGS','ASTON MIDGE','HAASFLY','AUD-EYE SPORT','FLYPINE','CADDIS-LAC RACING'];
   const known=teams.indexOf(e.provider),variant=known>=0?known:hash(e.provider)%11;
   const body=paint(e.colour,.34,.13,1),secondary=paint(e.secondary,.27,.17,.95),accent=paint(e.accent,.42,.14,.92);
@@ -162,6 +162,25 @@ export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
     rod(g,new THREE.Vector3(inX,.32,z+.18),new THREE.Vector3(x*.91,y,z),carbon,.017,6);
   }
 
+  // AGP-28 detail pass: brake ducts, wheel nuts, floor strakes, nose camera and rear cooling.
+  // These small hard-edged forms stop the car reading as a single smooth blob in close TV shots.
+  for(const [x,y,z,front] of specs){
+    const side=Math.sign(x),nut=add(g,new THREE.CylinderGeometry(.075,.075,.06,lowPower?8:16),accent,[x+side*(front?.205:.238),y,z],[0,0,Math.PI/2]);
+    nut.castShadow=true;
+    add(g,new THREE.BoxGeometry(.075,.23,.18),carbon2,[side*(front?1.24:1.27),y,z+(front?-.05:.08)],[0,side*.12,0]);
+  }
+  for(const side of [-1,1]){
+    add(g,aeroWedge(.055,.045,.17,.28,1.55),carbon2,[side*.78,.29,-1.28],[0,0,side*.05]);
+    add(g,aeroWedge(.045,.035,.13,.20,1.25),carbon2,[side*.94,.30,-1.12],[0,0,side*.08]);
+    add(g,new THREE.BoxGeometry(.055,.31,.68),carbon,[side*.54,.63,-2.05],[0,0,side*.16]);
+    if(!lowPower){add(g,new THREE.BoxGeometry(.025,.18,.56),accent,[side*.69,.86,-1.73],[0,0,side*.10]);}
+  }
+  add(g,new THREE.BoxGeometry(.20,.10,.16),carbon2,[0,.78,2.32],[-.08,0,0]);
+  add(g,new THREE.BoxGeometry(.10,.055,.22),accent,[0,.84,2.34],[-.08,0,0]);
+  // Distinct exhaust and gearbox termination beneath the rear wing.
+  add(g,new THREE.CylinderGeometry(.075,.095,.38,lowPower?8:14),standard('#555b60',.72,.22),[0,.67,-2.48],[Math.PI/2,0,0]);
+  add(g,aeroWedge(.72,.46,.20,.15,.72),carbon2,[0,.47,-2.30],[.08,0,0]);
+
   // Constructor livery languages: large clean zones, not random stripes.
   if(variant===0){
     add(g,aeroWedge(.35,.24,.035,.035,3.45),secondary,[0,.955,.05],[0,0,-.045]);
@@ -207,7 +226,7 @@ export function buildPremiumFormulaCar(e:PremiumCarEntrant,lowPower=false){
   const sprays=[-1,1].map(side=>add(g,new THREE.ConeGeometry(.22,1.48,lowPower?5:8,1,true),sprayMaterial.clone(),[side*1.20,.34,-2.42],[-Math.PI/2,0,0]));sprays.forEach(m=>{m.visible=false;m.renderOrder=2;});
   const rain=add(g,new THREE.BoxGeometry(.24,.085,.05),new THREE.MeshStandardMaterial({color:'#f32626',emissive:'#f32626',emissiveIntensity:3.2}),[0,.55,-2.98]);
 
-  g.userData.flyDriver=flyDriver;g.userData.rainLight=rain;g.userData.wheels=wheels;g.userData.spray=sprays;g.userData.premiumCar=true;g.userData.team=e.provider;g.userData.variant=variant;g.userData.chassis='AGP-27';
+  g.userData.flyDriver=flyDriver;g.userData.rainLight=rain;g.userData.wheels=wheels;g.userData.spray=sprays;g.userData.premiumCar=true;g.userData.team=e.provider;g.userData.variant=variant;g.userData.chassis='AGP-28';
   g.scale.setScalar(.80);
   return g;
 }
