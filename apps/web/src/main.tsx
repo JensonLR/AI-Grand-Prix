@@ -21,6 +21,7 @@ import './experience-v4-ux.css';
 import './mobile-race-v5.css';
 import './mobile-championship-v6.css';
 import './mobile-entire-app-v7.css';
+import './identity-theatre-v9.css';
 
 createRoot(document.getElementById('root')!).render(<StrictMode><ChampionshipApp/></StrictMode>);
 
