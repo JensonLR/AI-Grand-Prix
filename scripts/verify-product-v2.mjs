@@ -9,7 +9,7 @@ require(app.includes('<Opening2027 track={track}'), 'Opening2027 is not the prod
 require(app.includes('<PaddockHome track={track}'), 'PaddockHome is not the production home screen');
 require(app.includes('await gp.loadReplay(replay)')&&app.includes("gp.setCamera('broadcast');gp.setPaused(false);gp.start();"), 'opening scene does not safely stage the Bahrain attract race before starting RAF');
 require(replay.trackId==='bh-2002'&&(replay.frames?.[0]?.cars?.length??0)===22,'opening attract replay is not a 22-car Bahrain grid');
-require(opening.includes('THE GRID IS')&&opening.includes('OFFICIAL 24-ROUND CHAMPIONSHIP'),'new 2027 opening copy missing');
+require(opening.includes('FRUIT FLY BRAINS.')&&opening.includes('RACING MACHINES.')&&opening.includes('BANC V888 · EMBODIED CONNECTOME MOTORSPORT'),'new embodied-connectome opening copy missing');
 require(home.includes('24-ROUND CALENDAR')&&home.includes('CURRENT CHAMPIONSHIP ROUND'),'season-first paddock missing');
 require(scene.includes('buildPremiumWorld(this.worldGroup'), 'circuit-specific world generator is not active');
 require(!scene.includes("this.startRace({session:'QUICK_RACE',laps:3,entrants:8"), 'legacy 8-car constructor auto-start still active');
