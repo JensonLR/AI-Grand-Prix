@@ -15,11 +15,11 @@ export function Opening2027({track,onEnter,onCalendar}:{track:TrackDefinition;on
     </header>
     <div className="opening-hero">
       <div className="opening-copy">
-        <BuildPlate text="OFFICIAL 24-ROUND CHAMPIONSHIP"/>
+        <BuildPlate text="BANC V888 · EMBODIED CONNECTOME MOTORSPORT"/>
         <p className="opening-eyebrow">ROUND {String(track.round).padStart(2,'0')} · {track.country.toUpperCase()} · {track.dates}</p>
-        <h1><span>THE GRID IS</span><strong>ALIVE.</strong></h1>
-        <p className="opening-lede">Twenty-two persistent connectome drivers. Eleven constructors. One championship following the 2027 race calendar in published order.</p>
-        <div className="opening-actions">
+        <h1><span>FRUIT FLY BRAINS.</span><strong>RACING MACHINES.</strong></h1>
+        <p className="opening-lede">188,508 mapped neurons. 11,752,828 directed connections. Twenty-two persistent Drosophila connectome drivers embodied inside purpose-built racing machines, fighting through a 24-round world championship.</p>
+        <div className="opening-proof"><span><b>188,508</b><small>MAPPED NEURONS</small></span><span><b>11.75M</b><small>DIRECTED PAIRS</small></span><span><b>22</b><small>FLY DRIVERS</small></span><span><b>24</b><small>WORLD ROUNDS</small></span></div><div className="opening-actions">
           <button className="opening-primary" onClick={onEnter}><span>ENTER CHAMPIONSHIP</span><b>→</b></button>
           <button className="opening-secondary" onClick={onCalendar}>VIEW 24-ROUND CALENDAR</button>
         </div>
